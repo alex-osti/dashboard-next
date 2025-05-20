@@ -331,7 +331,7 @@ export default function DashboardPage() {
 
                         <section id="booking-section" className="dashboard-section card">
                             <h2 className="section-title"><span className="dashicons dashicons-calendar-alt"></span>Ready, <span id="visitor-name-cta">{firstName}</span>?</h2>
-                            <p>Let's discuss how MakerToo can help <span id="visitor-company-cta">{companyName}</span>.</p>
+                            <p>Let&#39; discuss how MakerToo can help <span id="visitor-company-cta">{companyName}</span>.</p>
                             <div id="booking-widget-container" className="booking-widget">
                                 {wpConfig && wpConfig.bookingLink && !wpConfig.bookingLink.includes("YOUR_") ? (
                                     <iframe src={wpConfig.bookingLink} title="Schedule a Consultation" loading="lazy" 
