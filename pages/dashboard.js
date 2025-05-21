@@ -357,7 +357,7 @@ export default function DashboardPage() {
                             <section id="analytics-overview" className="dashboard-section card">
                                 <h2 className="section-title"><span className="dashicons dashicons-chart-area"></span>Illustrative Performance Projections</h2>
                                 <p style={{textAlign: 'center', marginBottom: '30px', color: 'var(--text-secondary)'}}>
-                                    Visualizing the potential impact of MakerToo's */ solutions for {companyName}.
+                                    Visualizing the potential impact of MakerToo&#39;s solutions for {companyName}.
                                 </p>
                                 <div className="charts-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '25px'}}>
                                     <div className="chart-container-wrapper">
@@ -397,7 +397,7 @@ export default function DashboardPage() {
 
                             <section id="booking-section" className="dashboard-section card">
                                 <h2 className="section-title"><span className="dashicons dashicons-calendar-alt"></span>Ready to Implement, <span id="visitor-name-cta">{firstName}</span>?</h2>
-                                <p>Let's */ discuss how MakerToo can architect and implement these AI & Automation strategies for <span id="visitor-company-cta">{companyName}</span>.</p>
+                                <p>Let&#39;s discuss how MakerToo can architect and implement these AI & Automation strategies for <span id="visitor-company-cta">{companyName}</span>.</p>
                                 <div id="booking-widget-container" className="booking-widget">
                                     {wpConfig && wpConfig.bookingLink && !wpConfig.bookingLink.includes("YOUR_") ? (
                                         <iframe src={wpConfig.bookingLink} title="Schedule a Consultation" loading="lazy" 
