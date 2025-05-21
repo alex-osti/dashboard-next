@@ -22,7 +22,12 @@ function escapeHtml(unsafe) {
         if (unsafe === null || unsafe === undefined) return '';
         try { unsafe = String(unsafe); } catch (e) { return ''; }
     }
-    return unsafe.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");;
 }
 
 export default function DashboardPage() {
