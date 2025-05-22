@@ -2,7 +2,6 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
-// import pluginReact from 'eslint-plugin-react'; // Likely not needed due to next/core-web-vitals
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,7 +11,7 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals"), // Base Next.js rules (includes react, react-hooks, next, jsx-a11y)
+  ...compat.extends("next/core-web-vitals"), // Base Next.js rules
   {
     // Customizations and overrides
     files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
@@ -31,23 +30,19 @@ const eslintConfig = [
       },
     },
     rules: {
-      'react/no-unescaped-entities': ['warn', { // Set to 'warn' for now
+      'react/no-unescaped-entities': ['warn', { // Set to 'warn' to avoid build breaks during setup
         forbid: [
-          { char: '>', alternative: '>' },
-          { char: '"', alternative: '"' },
-          { char: '}', alternative: '}' },
-          { char: '{', alternative: '{' },
-          // By not listing "'", we are telling *this specific rule override*
-          // that we don't want to forbid it.
-          // If next/core-web-vitals still flags it, its base config is stricter.
+          // We explicitly list what MUST be escaped.
+          // If a character is not in this list, this specific rule override won't flag it.
+          { char: '>', alternative: '>', message: 'Always escape ">" in JSX text with ">".' },
+          { char: '}', alternative: '}', message: 'Always escape "}" in JSX text with "}" (especially if not part of an expression).' },
+          { char: '{', alternative: '{', message: 'Always escape "{" in JSX text with "{" (especially if not part of an expression).' },
+          // By NOT including an entry for "'" (apostrophe) or '"' (double quote) here,
+          // we are telling THIS PART of the ESLint config that we don't mind them being unescaped.
+          // HOWEVER, the base "next/core-web-vitals" might still enforce escaping for them.
         ],
       }],
-      // Example: Allow console.log during development
       'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-
-      // Add any other specific rule overrides here.
-      // For example, if you use prop spreading and want to allow it:
-      // 'react/jsx-props-no-spreading': 'off',
     },
   }
 ];
