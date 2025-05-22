@@ -1,6 +1,7 @@
 // pages/dashboard.js
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
+import ClipLoader from "react-spinners/ClipLoader";
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { marked } from 'marked';
@@ -343,11 +344,22 @@ export default function DashboardPage() {
 
 
                     {/* Loading, Error, No Data Messages */}
-                    {isLoading && (
-                        <div className="dashboard-section card" style={{ textAlign: 'center', padding: '30px 20px', margin: '20px 0' }}>
-                            <div className="loader" style={{ margin: '0 auto 15px auto', border: '5px solid var(--border-color)', borderTop: '5px solid var(--accent-green)', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' }}></div>
-                            <p style={{ fontSize: '1.1em', color: 'var(--text-secondary)' }}>Crafting your personalized experience...</p>
-                        </div>
+                    // Updated block for appState === 'loading' or 'initializing_config'
+                    {(appState === 'loading' || appState === 'initializing_config') && (
+                     <div className="dashboard-section card" style={{ textAlign: 'center', padding: '40px 20px', margin: '20px 0' }}>
+                      <div style={{display: 'flex', justifyContent: 'center', marginBottom: '20px'}}>
+                     <ClipLoader
+                          color={"var(--accent-green)"} // Uses your CSS variable
+                          loading={true}
+                           size={50} // Adjust size as needed
+                           aria-label="Loading Spinner"
+                            data-testid="loader"
+                                       />
+                       </div>
+                         <p style={{ fontSize: '1.1em', color: 'var(--text-secondary)' }}>
+                            {appState === 'initializing_config' ? 'Initializing dashboard services...' : 'Crafting your personalized experience...'}
+                              </p>
+                                  </div>
                     )}
                     {error && !isLoading && (<div className="dashboard-message error" style={{margin: '20px 0'}}><span className="dashicons dashicons-warning" style={{marginRight: '8px'}}></span>{error}</div>)}
                     {showNoDataMessage && !isLoading && !error && !hasData && (
