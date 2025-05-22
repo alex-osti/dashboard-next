@@ -4,6 +4,8 @@
    ========================================================================== */
 
 
+
+
 /* --- CSS Variables (Ensure these are defined or define them here) --- */
 :root {
     --bg-dark-primary: #0A0F14;      /* Near-black for main page */
@@ -12,13 +14,19 @@
     --bg-input: #0A0F14;            /* Darker input background */
 
 
+
+
     --text-light: #f0f0f5;          /* Brightest text */
     --text-secondary: #c0c0d0;      /* Default text */
     --text-muted: #888e9f;          /* Muted text */
 
 
+
+
     --border-color: #33334c;        /* Main border */
     --border-color-light: #4a4a63;  /* Lighter border / dividers */
+
+
 
 
     --accent-green: #00ffcc;
@@ -30,8 +38,12 @@
     --accent-blue-rgb: 0, 191, 255;
 
 
+
+
     --font-primary: 'Montserrat', sans-serif;
     --font-display: 'Orbitron', sans-serif; /* For large headers/numbers */
+
+
 
 
     --shadow-soft: 0 4px 12px rgba(0,0,0,0.15);
@@ -42,7 +54,11 @@
 }
 
 
+
+
 /* Import Fonts (if not already done in WP) */
+
+
 
 
 /* --- Overall Dashboard Page Area --- */
@@ -57,6 +73,8 @@
 }
 
 
+
+
 /* --- Main Dashboard Container --- */
 .personalized-dashboard-container {
     max-width: 1200px; /* Slightly wider for more complex layouts */
@@ -64,6 +82,8 @@
     padding: 0;
     background-color: transparent;
 }
+
+
 
 
 /* --- Dashboard Header (Welcome message) --- */
@@ -80,6 +100,8 @@
 }
 
 
+
+
 .personalized-dashboard-container .dashboard-header h1 {
     font-family: var(--font-display);
     font-size: clamp(1.8em, 3.5vw, 2.2em); /* Slightly larger */
@@ -88,6 +110,8 @@
     margin-bottom: 10px;
     font-weight: 600;
 }
+
+
 
 
 .personalized-dashboard-container #personalized-greeting p {
@@ -102,6 +126,8 @@
     color: var(--accent-green);
     margin-bottom: 0;
 }
+
+
 
 
 /* --- Visitor Input Area --- */
@@ -137,6 +163,8 @@
 }
 
 
+
+
 .personalized-dashboard-container .visitor-input-area button.button {
     padding: 12px 25px; /* More padding */
     background-color: var(--accent-green);
@@ -161,6 +189,10 @@
     margin-top: 10px;
     min-height: 1.4em;
 }
+
+
+
+
 
 
 
@@ -205,6 +237,10 @@
 
 
 
+
+
+
+
 /* --- General Section Styling (Dashboard Card) --- */
 .personalized-dashboard-container .dashboard-section.card {
     margin-bottom: 30px; /* Consistent spacing */
@@ -222,6 +258,8 @@
     box-shadow: 0 8px 25px rgba(0,0,0,0.25);
 }
 */
+
+
 
 
 /* --- Section Titles within Dashboard Cards --- */
@@ -248,6 +286,8 @@
 }
 
 
+
+
 .personalized-dashboard-container .subsection-title {
     font-family: var(--font-primary);
     font-size: 1.1em; /* Slightly larger */
@@ -258,9 +298,13 @@
 }
 
 
+
+
 .personalized-dashboard-container .section-separator {
     display: none;
 }
+
+
 
 
 /* --- "Company at a Glance" & "Growth Opps" Specifics --- */
@@ -284,6 +328,8 @@
     color: var(--text-light);
     font-weight: 600; /* Stronger strong */
 }
+
+
 
 
 .personalized-dashboard-container #growth-opportunities-list {
@@ -310,6 +356,8 @@
 }
 
 
+
+
 /* --- KPI Cards --- */
 .personalized-dashboard-container .kpi-cards-container {
     display: grid;
@@ -334,6 +382,8 @@
 }
 
 
+
+
 .personalized-dashboard-container .kpi-label {
     font-size: 0.85em;
     color: var(--text-muted);
@@ -353,6 +403,8 @@
     font-size: 1.1em; /* Relative to label */
     color: var(--text-muted); /* Or an accent */
 }
+
+
 
 
 .personalized-dashboard-container .kpi-value {
@@ -376,6 +428,10 @@
 .personalized-dashboard-container .kpi-trend.up { color: var(--accent-green); }
 .personalized-dashboard-container .kpi-trend.down { color: var(--accent-pink); }
 .personalized-dashboard-container .kpi-trend.neutral { color: var(--text-muted); }
+
+
+
+
 
 
 
@@ -425,6 +481,8 @@
 }
 
 
+
+
 .personalized-dashboard-container #deep-research-accordion .accordion-content {
     padding: 25px 30px;
     background-color: transparent;
@@ -446,6 +504,8 @@
 .personalized-dashboard-container #full-deep-research-content h3 { font-size: 1.1em; }
 
 
+
+
 .personalized-dashboard-container #full-deep-research-content p { color: var(--text-secondary); margin-bottom: 1em;}
 .personalized-dashboard-container #full-deep-research-content code {
     background-color: var(--bg-dark-primary); color: var(--accent-pink);
@@ -460,6 +520,8 @@
     padding-left: 15px; margin-left: 0; font-style: italic;
     background-color: rgba(var(--accent-green-rgb), 0.03); /* Subtle bg for blockquote */
 }
+
+
 
 
 /* --- Booking Widget --- */
@@ -494,6 +556,10 @@
 
 
 
+
+
+
+
 /* --- Dashboard Mobile Responsiveness (Refined) --- */
 @media (max-width: 992px) { /* Adjust breakpoint for wider container */
     .personalized-dashboard-container .kpi-cards-container {
@@ -502,9 +568,13 @@
 }
 
 
+
+
 @media (max-width: 768px) {
     .personalized-dashboard-page-area { padding-top: 70px; padding-left:10px; padding-right:10px; }
     .personalized-dashboard-container { margin: 15px auto; }
+
+
 
 
     .personalized-dashboard-container .dashboard-header,
@@ -523,6 +593,8 @@
     .personalized-dashboard-container .subsection-title { font-size: 1em; }
 
 
+
+
     .personalized-dashboard-container #company-at-a-glance,
     .personalized-dashboard-container #growth-opportunities-list,
     .personalized-dashboard-container #deep-research-accordion .accordion-content {
@@ -535,6 +607,8 @@
 }
 
 
+
+
 @media (max-width: 480px) {
     .personalized-dashboard-page-area { padding-top: 60px; }
     .personalized-dashboard-container .dashboard-header,
@@ -545,6 +619,8 @@
     }
     .personalized-dashboard-container .dashboard-header h1 { font-size: clamp(1.4em, 5vw, 1.7em); }
     .personalized-dashboard-container .section-title { font-size: clamp(1.1em, 4vw, 1.3em); }
+
+
 
 
     .personalized-dashboard-container .kpi-card { padding: 20px; }
@@ -560,6 +636,8 @@
 }
 
 
+
+
 /* Additional styles for charts (see section II) */
 .chart-container {
     position: relative;
@@ -573,7 +651,9 @@
     box-shadow: var(--shadow-soft);
 }
 
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+

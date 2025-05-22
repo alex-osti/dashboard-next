@@ -10,12 +10,15 @@ import {
     BarElement, ArcElement, Title, Tooltip, Legend, Filler,
 } from 'chart.js';
 
+
 ChartJS.register(
     CategoryScale, LinearScale, PointElement, LineElement, BarElement,
     ArcElement, Title, Tooltip, Legend, Filler
 );
 
+
 const WP_API_URL = process.env.NEXT_PUBLIC_WP_API_URL;
+
 
 function escapeHtml(unsafe) {
     if (typeof unsafe !== 'string') {
@@ -30,9 +33,11 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");;
 }
 
+
 export default function DashboardPage() {
     const router = useRouter();
     const { visitor_id: visitorIdFromUrl } = router.query;
+
 
     const [wpConfig, setWpConfig] = useState(null);
     const [visitorIdInput, setVisitorIdInput] = useState('');
@@ -43,8 +48,10 @@ export default function DashboardPage() {
     const [currentStatusMessage, setCurrentStatusMessage] = useState('Enter a Visitor ID to begin.');
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
+
     const lastFetchedIdRef = useRef(null);
     const configFetchedRef = useRef(false);
+
 
     const fetchVisitorDataViaProxy = useCallback(async (visitorId) => {
         if (!wpConfig || !wpConfig.ajax_url || !wpConfig.nonce) {
@@ -85,6 +92,7 @@ export default function DashboardPage() {
         }
     }, [wpConfig]);
 
+
     const fetchAndRenderDashboard = useCallback(async (visitorIdToFetch) => {
         if (!visitorIdToFetch) {
             // console.log("PDS_NEXT_CLIENT: fetchAndRenderDashboard - no visitorIdToFetch. Resetting UI.");
@@ -119,6 +127,7 @@ export default function DashboardPage() {
         }
     }, [wpConfig, fetchVisitorDataViaProxy]);
 
+
     useEffect(() => { // Config Fetch Effect
         // console.log("PDS_NEXT_CLIENT: Config fetch EFFECT. Fetched flag:", configFetchedRef.current);
         if (!configFetchedRef.current && WP_API_URL) {
@@ -136,6 +145,7 @@ export default function DashboardPage() {
             fetchWpConfig();
         } else if (!WP_API_URL) { console.error("PDS_NEXT_CLIENT: CRITICAL - WP_API_URL (NEXT_PUBLIC_WP_API_URL) not defined."); setError("Dashboard Error: API URL configuration is missing.");}
     }, []); // Runs once on mount
+
 
     useEffect(() => { // Data Fetch Trigger Effect based on URL and Config
         // console.log("PDS_NEXT_CLIENT: Data fetch trigger EFFECT. visitorIdFromUrl:", visitorIdFromUrl, "wpConfig:", !!wpConfig, "isLoading:", isLoading, "lastFetchedId:", lastFetchedIdRef.current);
@@ -155,6 +165,7 @@ export default function DashboardPage() {
             }
         }
     }, [visitorIdFromUrl, wpConfig, fetchAndRenderDashboard, isLoading]); // isLoading added to dependencies
+
 
     const handleFetchButtonClick = () => {
         const newVisitorId = visitorIdInput.trim();
@@ -181,11 +192,13 @@ export default function DashboardPage() {
     const handleInputChange = (e) => { setVisitorIdInput(e.target.value); };
     const handleKeyPress = (e) => { if (e.key === 'Enter') { e.preventDefault(); handleFetchButtonClick(); } };
 
+
     const hasData = currentNocoRecord && typeof currentNocoRecord === 'object' && Object.keys(currentNocoRecord).length > 0 && !isLoading && !error;
-    
+   
     const firstName = hasData ? (currentNocoRecord.first_name || 'Valued Lead') : 'Visitor';
     const companyNameFromAPI = hasData ? (currentNocoRecord['organization/name'] || currentNocoRecord.company_short) : null;
     const companyName = companyNameFromAPI || (hasData ? 'Company' : 'Your Company');
+
 
     let personalizedGreetingHtml = '';
     if (!wpConfig && !isLoading && !error) { personalizedGreetingHtml = `<p class="lead" style="color: var(--text-muted);">Initializing dashboard...</p>`; }
@@ -198,6 +211,7 @@ export default function DashboardPage() {
     else if (error) { personalizedGreetingHtml = `<p class="lead" style="color: var(--accent-pink);">Attention Required</p><p>We encountered an issue loading your personalized data. Please double-check the Visitor ID or try again. If the problem persists, support has been notified.</p>`;}
     else { personalizedGreetingHtml = `<p class="lead">Welcome to Your Personalized Dashboard!</p><p>Please enter your unique Visitor ID above to unlock tailored insights.</p>`;}
 
+
     let companyAtAGlanceHtml = '';
     if (hasData) {
         const logoUrl = currentNocoRecord['organization/logo_url'];
@@ -205,6 +219,7 @@ export default function DashboardPage() {
         const overview = currentNocoRecord.extracted_company_overview;
         const founderSummary = currentNocoRecord.extracted_founder_profile_summary;
         const companyWebsite = currentNocoRecord['organization/website_url'];
+
 
         if (logoUrl && logoUrl.startsWith('http')) {
             companyAtAGlanceHtml += `<div style="text-align:center; margin-bottom: 20px;">`;
@@ -221,6 +236,8 @@ export default function DashboardPage() {
     } else if (!isLoading && !error && showNoDataMessage) { companyAtAGlanceHtml += `<h3>About Your Company:</h3><p>Insights will appear once data is loaded.</p>`; }
 
 
+
+
     let growthOpportunitiesHtml = '';
     if (hasData && currentNocoRecord.structured_core_services) {
         try {
@@ -230,6 +247,7 @@ export default function DashboardPage() {
             } else { growthOpportunitiesHtml = "<p>Analysis of core services to identify specific growth opportunities is in progress.</p>"; }
         } catch (e) { growthOpportunitiesHtml = "<p>Unable to display specific growth opportunities at this time.</p>";}
     } else if (!isLoading && !error && showNoDataMessage) { growthOpportunitiesHtml = "<p>Tailored growth opportunities will be highlighted here.</p>";}
+
 
     let kpisToShow = [
         { label: "Strategic Alignment", value: "High", target: "With MakerToo's Open-Source Focus", icon: "dashicons-admin-links" },
@@ -244,13 +262,15 @@ export default function DashboardPage() {
         } catch (e) { /* console.warn("PDS_NEXT_CLIENT: Could not parse kpi_data from NocoDB.", e); */ }
     }
 
+
     let fullDeepResearchHtml = "<p>Your comprehensive research report will be accessible here, providing in-depth analysis and strategic recommendations.</p>";
     if (hasData && currentNocoRecord.deep_reaserach) { // Match CSV typo 'deep_reaserach'
         try { fullDeepResearchHtml = marked.parse(currentNocoRecord.deep_reaserach); }
         catch (e) { fullDeepResearchHtml = `<pre>${escapeHtml(currentNocoRecord.deep_reaserach)}</pre>`;}
     }
-    
+   
     const displayDashboardContent = hasData; // Main condition to show content sections
+
 
     const getChartJsDefaultOptions = useCallback((customColors = {}) => {
         if (typeof window === 'undefined') return { scales: { y: {}, x: {} }, plugins: { legend: {}, tooltip: {} } };
@@ -276,6 +296,7 @@ export default function DashboardPage() {
         return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim() || fallbackRgb;
     }, []);
 
+
     const illustrativeRevenueData = { /* ... same illustrative data ... */
         labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Next Q (Proj.)'], datasets: [{ label: 'Potential Revenue Growth', data: [50, 65, 80, 75, 95], borderColor: defaultChartOptions.plugins?.tooltip?.borderColor || '#00ffcc', backgroundColor: `rgba(${getRgbColor('--accent-green-rgb', '0,255,204')}, 0.15)`, tension: 0.3, fill: true,}]
     };
@@ -288,6 +309,8 @@ export default function DashboardPage() {
     const doughnutChartOptions = { ...defaultChartOptions, cutout: '60%', plugins: { ...defaultChartOptions.plugins, legend: { ...defaultChartOptions.plugins?.legend, position: 'bottom' } } };
 
 
+
+
     return (
         <>
             <Head>
@@ -295,6 +318,7 @@ export default function DashboardPage() {
                 <meta name="description" content={`Personalized dashboard insights ${hasData ? `for ${companyName}` : 'by MakerToo'}`} />
                 <link rel="icon" href="/favicon.ico" /> {/* Make sure you have a favicon.ico in your /public folder */}
             </Head>
+
 
             <main id="primary" className="site-main personalized-dashboard-page-area">
                 <div className="personalized-dashboard-container">
@@ -307,6 +331,7 @@ export default function DashboardPage() {
                         <div id="personalized-greeting" dangerouslySetInnerHTML={{ __html: personalizedGreetingHtml }}></div>
                     </div>
 
+
                     {/* Visitor Input Area */}
                     <div className="visitor-input-area">
                         <input type="text" id="visitorIdInput" placeholder="Enter Your Visitor ID" value={visitorIdInput} onChange={handleInputChange} onKeyPress={handleKeyPress} disabled={isLoading || !wpConfig} aria-label="Visitor ID Input"/>
@@ -315,6 +340,7 @@ export default function DashboardPage() {
                         </button>
                         <p id="currentVisitorStatus" className="visitor-status-message">{currentStatusMessage}</p>
                     </div>
+
 
                     {/* Loading, Error, No Data Messages */}
                     {isLoading && (
@@ -330,6 +356,7 @@ export default function DashboardPage() {
                         </div>
                     )}
 
+
                     {/* Main Dashboard Content Sections - Rendered only if hasData */}
                     {displayDashboardContent && (
                         <div id="dashboard-content">
@@ -339,6 +366,7 @@ export default function DashboardPage() {
                                 <h3 className="subsection-title">Key Growth Opportunities with MakerToo:</h3>
                                 <div id="growth-opportunities-list" dangerouslySetInnerHTML={{ __html: growthOpportunitiesHtml }}></div>
                             </section>
+
 
                             <section id="kpi-section" className="dashboard-section card">
                                 <h2 className="section-title"><span className="dashicons dashicons-performance"></span>Projected Impact on Key Metrics</h2>
@@ -353,6 +381,7 @@ export default function DashboardPage() {
                                     ))}
                                 </div>
                             </section>
+
 
                             <section id="analytics-overview" className="dashboard-section card">
                                 <h2 className="section-title"><span className="dashicons dashicons-chart-area"></span>Illustrative Performance Projections</h2>
@@ -377,6 +406,7 @@ export default function DashboardPage() {
                                 </div>
                             </section>
 
+
                             <section id="full-research-section" className="dashboard-section card">
                                 <h2 className="section-title"><span className="dashicons dashicons-book-alt"></span>Dive Deeper: Full Research for <span id="visitor-company-report-title">{companyName}</span></h2>
                                 <p>The following is the detailed research report compiled to understand unique positions and opportunities.</p>
@@ -395,12 +425,13 @@ export default function DashboardPage() {
                                 </div>
                             </section>
 
+
                             <section id="booking-section" className="dashboard-section card">
                                 <h2 className="section-title"><span className="dashicons dashicons-calendar-alt"></span>Ready to Implement, <span id="visitor-name-cta">{firstName}</span>?</h2>
                                 <p>Let*s discuss how MakerToo can architect and implement these AI & Automation strategies for <span id="visitor-company-cta">{companyName}</span>.</p>
                                 <div id="booking-widget-container" className="booking-widget">
                                     {wpConfig && wpConfig.bookingLink && !wpConfig.bookingLink.includes("YOUR_") ? (
-                                        <iframe src={wpConfig.bookingLink} title="Schedule a Consultation" loading="lazy" 
+                                        <iframe src={wpConfig.bookingLink} title="Schedule a Consultation" loading="lazy"
                                                 style={{ width: '100%', height: '550px', border: 'none', borderRadius: 'var(--border-radius-md)' }}/>
                                     ) : (
                                         <div className="booking-placeholder" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', textAlign: 'center' }}>
