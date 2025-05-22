@@ -1,26 +1,24 @@
 // pages/dashboard.js
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
-import ClipLoader from "react-spinners/ClipLoader";
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { marked } from 'marked';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
     Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
-    BarElement, ArcElement, Title, Tooltip, Legend, Filler,
+    BarElement, ArcElement, Title, Tooltip, Legend, Filler, Colors // Keep Colors if using Chart.js v4+
 } from 'chart.js';
-
+import ClipLoader from "react-spinners/ClipLoader"; // Using ClipLoader from react-spinners
 
 ChartJS.register(
     CategoryScale, LinearScale, PointElement, LineElement, BarElement,
-    ArcElement, Title, Tooltip, Legend, Filler
+    ArcElement, Title, Tooltip, Legend, Filler, Colors // Keep Colors
 );
-
 
 const WP_API_URL = process.env.NEXT_PUBLIC_WP_API_URL;
 
-
+// --- Helper Functions ---
 function escapeHtml(unsafe) {
     if (typeof unsafe !== 'string') {
         if (unsafe === null || unsafe === undefined) return '';
@@ -31,431 +29,451 @@ function escapeHtml(unsafe) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");;
+        .replace(/'/g, "&#039;");
 }
 
+const renderMarkdownForHTML = (markdownText) => {
+    if (!markdownText) return { __html: '' };
+    marked.setOptions({
+        breaks: true,
+        gfm: true,
+    });
+    const rawHtml = marked.parse(markdownText);
+    const sanitizedHtml = rawHtml
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/on([a-z]+)=(['"]?)([^"'>\s]+)\2/gi, 'data-on$1=$2$3$2');
+    return { __html: sanitizedHtml };
+};
+
+const getChartColorsFromCSSVariables = () => {
+    if (typeof window === 'undefined') {
+        return {
+            primary: '#00ffcc', secondary: '#00bfff', pink: '#ff007f', purple: '#9f78ff',
+            grid: 'rgba(160,160,184,0.1)', ticks: '#787e8f',
+            tooltipBg: '#10151B', tooltipText: '#f0f0f5',
+            fontFamily: 'Montserrat, sans-serif',
+            accentGreenRgb: '0,255,204', accentBlueRgb: '0,191,255', accentPinkRgb: '255,0,127', accentPurpleRgb: '159,120,255'
+        };
+    }
+    const rootStyles = getComputedStyle(document.documentElement);
+    const safeGet = (prop, fb) => rootStyles.getPropertyValue(prop)?.trim() || fb;
+    return {
+        primary: safeGet('--accent-green', '#00ffcc'),
+        secondary: safeGet('--accent-blue', '#00bfff'),
+        pink: safeGet('--accent-pink', '#ff007f'),
+        purple: safeGet('--accent-purple', '#9f78ff'),
+        grid: `rgba(${safeGet('--text-rgb-secondary-raw', '160,160,184')}, 0.1)`,
+        ticks: safeGet('--text-muted', '#787e8f'),
+        tooltipBg: safeGet('--bg-dark-secondary', '#10151B'),
+        tooltipText: safeGet('--text-light', '#f0f0f5'),
+        fontFamily: safeGet('--font-primary', 'Montserrat, sans-serif').split(',')[0].trim(),
+        accentGreenRgb: safeGet('--accent-green-rgb', '0,255,204'),
+        accentBlueRgb: safeGet('--accent-blue-rgb', '0,191,255'),
+        accentPinkRgb: safeGet('--accent-pink-rgb', '255,0,127'),
+        accentPurpleRgb: safeGet('--accent-purple-rgb', '159,120,255'),
+    };
+};
+
+const getChartJsDefaultOptions = (chartColors) => ({
+    responsive: true, maintainAspectRatio: false,
+    color: chartColors.ticks,
+    scales: {
+        y: { beginAtZero: true, grid: { color: chartColors.grid, borderColor: chartColors.grid }, ticks: { color: chartColors.ticks, font: { family: chartColors.fontFamily, size: 10 } } },
+        x: { grid: { display: false, borderColor: chartColors.grid }, ticks: { color: chartColors.ticks, font: { family: chartColors.fontFamily, size: 10 } } }
+    },
+    plugins: {
+        legend: { position: 'top', labels: { color: chartColors.ticks, font: { family: chartColors.fontFamily }, boxWidth: 12, padding: 15 } },
+        tooltip: {
+            enabled: true, backgroundColor: chartColors.tooltipBg, titleColor: chartColors.tooltipText, bodyColor: chartColors.tooltipText,
+            titleFont: { family: chartColors.fontFamily, weight: '600' }, bodyFont: { family: chartColors.fontFamily },
+            borderColor: chartColors.primary, borderWidth: 1, padding: 10, cornerRadius: 4,
+            usePointStyle: true,
+        },
+        colors: { forceOverride: true }
+    },
+    animation: { duration: 700, easing: 'easeOutQuart' }
+});
 
 export default function DashboardPage() {
     const router = useRouter();
     const { visitor_id: visitorIdFromUrl } = router.query;
 
-
     const [wpConfig, setWpConfig] = useState(null);
     const [visitorIdInput, setVisitorIdInput] = useState('');
-    const [currentNocoRecord, setCurrentNocoRecord] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [showNoDataMessage, setShowNoDataMessage] = useState(true); // Default to true
-    const [currentStatusMessage, setCurrentStatusMessage] = useState('Enter a Visitor ID to begin.');
-    const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-
+    // Renamed currentNocoRecord to nocoData for consistency with later parts of the code
+    const [nocoData, setNocoData] = useState(null); 
+    // Consolidated loading/error/message states into appState
+    const [appState, setAppState] = useState('initializing'); // initializing, ready, loading, error, no_data_for_id, data_loaded, initializing_config
+    const [errorMessage, setErrorMessage] = useState('');
+    const [isResearchAccordionOpen, setIsResearchAccordionOpen] = useState(false);
 
     const lastFetchedIdRef = useRef(null);
     const configFetchedRef = useRef(false);
+    const chartColorsRef = useRef(null);
 
+    useEffect(() => {
+        chartColorsRef.current = getChartColorsFromCSSVariables();
+    }, []);
 
-    const fetchVisitorDataViaProxy = useCallback(async (visitorId) => {
-        if (!wpConfig || !wpConfig.ajax_url || !wpConfig.nonce) {
-            throw new Error("WordPress configuration (ajax_url or nonce) is missing.");
+    const fetchWpConfig = useCallback(async () => {
+        if (!WP_API_URL) {
+            console.error("MAKERTOO_PAP_CLIENT: CRITICAL - NEXT_PUBLIC_WP_API_URL not defined.");
+            setErrorMessage("Dashboard Error: API URL configuration is missing.");
+            setAppState('error'); return null;
         }
-        // console.log("PDS_NEXT_CLIENT: Fetching data for visitorId:", visitorId, "using Nonce:", wpConfig.nonce);
+        setAppState('initializing_config');
+        try {
+            const response = await axios.get(`${WP_API_URL}/wp-json/personalized-dashboard/v1/config`);
+            if (response.data && response.data.success) return response.data.data;
+            throw new Error(response.data?.data?.message || 'Failed to fetch valid WP configuration.');
+        } catch (err) {
+            console.error("MAKERTOO_PAP_CLIENT: CRITICAL - Error fetching WP config:", err);
+            setErrorMessage(`Dashboard Error: Could not load configuration. ${err.message}`);
+            setAppState('error'); return null;
+        }
+    }, []);
+
+    const fetchVisitorData = useCallback(async (visitorId, currentWpConfig) => {
+        if (!currentWpConfig || !currentWpConfig.ajax_url || !currentWpConfig.nonce) {
+            throw new Error("WordPress configuration for data fetching is missing.");
+        }
         const formData = new FormData();
         formData.append('action', 'fetch_dashboard_data_proxy');
-        formData.append('nonce', wpConfig.nonce);
-        formData.append('visitor_id', visitorId); // This will be the random 'identifier_link' value
+        formData.append('nonce', currentWpConfig.nonce);
+        formData.append('visitor_id', visitorId);
         try {
-            const response = await axios.post(wpConfig.ajax_url, formData);
-            if (response.data.success) {
-                // console.log("PDS_NEXT_CLIENT: Proxy fetch success. Record:", response.data.data);
-                return response.data.data;
-            } else {
-                // console.error("PDS_NEXT_CLIENT: Proxy fetch error (success:false):", response.data.data);
-                throw new Error(response.data.data?.message || 'Failed to fetch data (server indicated failure).');
-            }
+            const response = await axios.post(currentWpConfig.ajax_url, formData);
+            if (response.data.success) return response.data.data;
+            throw new Error(response.data.data?.message || 'Failed to fetch data (server indicated failure).');
         } catch (err) {
-            console.error('PDS_NEXT_CLIENT: Proxy fetch EXCEPTION:', err);
-            let errorMessage = 'An error occurred while fetching data.';
+            let specificMessage = 'An error occurred while fetching your personalized data.';
             if (err.response) {
-                errorMessage = `Server error (${err.response.status}). `;
+                specificMessage = `Server error (${err.response.status}). `;
                 if (err.response.data && err.response.data.data && err.response.data.data.message) {
-                    errorMessage += err.response.data.data.message;
-                } else if (typeof err.response.data === 'string' && err.response.data.includes("Nonce")) {
-                     errorMessage += "Security check failed. Please try refreshing or contact support if this persists.";
-                } else {
-                    errorMessage += "Please check server logs for more details."
-                }
+                    specificMessage += err.response.data.data.message;
+                } else if (typeof err.response.data === 'string' && err.response.data.toLowerCase().includes("nonce")) {
+                     specificMessage += "Security check failed. Please try refreshing.";
+                } else { specificMessage += "Please try again or contact support." }
             } else if (err.request) {
-                errorMessage = 'No response from WordPress server. Is it running and accessible?';
-            } else {
-                errorMessage = err.message || errorMessage;
-            }
-            throw new Error(errorMessage);
+                specificMessage = 'No response from WordPress server. Please check connectivity.';
+            } else { specificMessage = err.message || specificMessage; }
+            throw new Error(specificMessage);
         }
-    }, [wpConfig]);
+    }, []);
 
-
-    const fetchAndRenderDashboard = useCallback(async (visitorIdToFetch) => {
-        if (!visitorIdToFetch) {
-            // console.log("PDS_NEXT_CLIENT: fetchAndRenderDashboard - no visitorIdToFetch. Resetting UI.");
-            setCurrentNocoRecord(null); setError(null); setShowNoDataMessage(true);
-            setCurrentStatusMessage("Please enter a Visitor ID."); setIsLoading(false); lastFetchedIdRef.current = null;
+    const loadDashboardForId = useCallback(async (idToFetch, currentWpConfig) => {
+        if (!idToFetch) {
+            setNocoData(null); setAppState('ready'); return;
+        }
+        if (!currentWpConfig) {
+            setAppState('initializing_config');
+            setErrorMessage('Configuration not yet loaded. Please wait.');
             return;
         }
-        // console.log("PDS_NEXT_CLIENT: fetchAndRenderDashboard - Attempting fetch for visitorId:", visitorIdToFetch);
-        setIsLoading(true); setError(null); setShowNoDataMessage(false);
-        setCurrentStatusMessage(`Fetching personalized insights for ID: ${visitorIdToFetch}...`);
+        setAppState('loading'); setErrorMessage('');
         try {
-            if (!wpConfig || !wpConfig.useAjaxProxy) throw new Error("WordPress configuration error. Cannot fetch data.");
-            const record = await fetchVisitorDataViaProxy(visitorIdToFetch);
+            const record = await fetchVisitorData(idToFetch, currentWpConfig);
             if (record && typeof record === 'object' && Object.keys(record).length > 0) {
-                // console.log("PDS_NEXT_CLIENT: Record successfully fetched for ID", visitorIdToFetch, ":", record);
-                setCurrentNocoRecord(record);
-                const dn = record.first_name || 'Valued Lead';
-                const cn = record['organization/name'] || record.company_short || 'Your Company';
-                setCurrentStatusMessage(`Showing personalized data for: ${dn} from ${cn}`);
-                setShowNoDataMessage(false);
+                setNocoData(record); setAppState('data_loaded');
             } else {
-                // console.warn("PDS_NEXT_CLIENT: No data returned or empty record for ID:", visitorIdToFetch);
-                setError(`No data found for Visitor ID: ${visitorIdToFetch}. Please verify the ID.`);
-                setCurrentNocoRecord(null); setShowNoDataMessage(true);
+                setNocoData(null); setAppState('no_data_for_id');
+                setErrorMessage(`No personalized insights found for Visitor ID: ${escapeHtml(idToFetch)}. Please verify the ID or contact us if this ID should be active.`);
             }
         } catch (err) {
-            console.error('PDS_NEXT_CLIENT: Error in fetchAndRenderDashboard for ID', visitorIdToFetch, ':', err);
-            setError(err.message || `An unexpected error occurred while loading data.`);
-            setCurrentNocoRecord(null); setShowNoDataMessage(true);
-        } finally {
-            setIsLoading(false);
+            setNocoData(null); setAppState('error');
+            setErrorMessage(err.message || `An unexpected error occurred. Please try again.`);
         }
-    }, [wpConfig, fetchVisitorDataViaProxy]);
+    }, [fetchVisitorData]);
 
-
-    useEffect(() => { // Config Fetch Effect
-        // console.log("PDS_NEXT_CLIENT: Config fetch EFFECT. Fetched flag:", configFetchedRef.current);
-        if (!configFetchedRef.current && WP_API_URL) {
-            configFetchedRef.current = true; // Set flag immediately to prevent re-fetch
-            const fetchWpConfig = async () => {
-                // console.log("PDS_NEXT_CLIENT: Attempting to fetch WP Config from:", `${WP_API_URL}/wp-json/personalized-dashboard/v1/config`);
-                try {
-                    const response = await axios.get(`${WP_API_URL}/wp-json/personalized-dashboard/v1/config`);
-                    if (response.data && response.data.success) {
-                        setWpConfig(response.data.data);
-                        // console.log("PDS_NEXT_CLIENT: WP Config fetched successfully:", response.data.data);
-                    } else { throw new Error(response.data?.data?.message || 'Failed to fetch valid WP configuration.'); }
-                } catch (err) { console.error("PDS_NEXT_CLIENT: CRITICAL - Error fetching WP config:", err); setError(`Dashboard Error: Could not load configuration from server. ${err.message}`);}
-            };
-            fetchWpConfig();
-        } else if (!WP_API_URL) { console.error("PDS_NEXT_CLIENT: CRITICAL - WP_API_URL (NEXT_PUBLIC_WP_API_URL) not defined."); setError("Dashboard Error: API URL configuration is missing.");}
-    }, []); // Runs once on mount
-
-
-    useEffect(() => { // Data Fetch Trigger Effect based on URL and Config
-        // console.log("PDS_NEXT_CLIENT: Data fetch trigger EFFECT. visitorIdFromUrl:", visitorIdFromUrl, "wpConfig:", !!wpConfig, "isLoading:", isLoading, "lastFetchedId:", lastFetchedIdRef.current);
-        if (wpConfig) { // Only proceed if config is loaded
-            if (visitorIdFromUrl) {
-                setVisitorIdInput(visitorIdFromUrl); // Sync input field with URL
-                if (!isLoading && visitorIdFromUrl !== lastFetchedIdRef.current) {
-                    // console.log("PDS_NEXT_CLIENT: Data fetch EFFECT - Conditions met. Fetching for new URL ID:", visitorIdFromUrl);
-                    setCurrentNocoRecord(null); setError(null); // Reset before new fetch
-                    lastFetchedIdRef.current = visitorIdFromUrl; // Update ref before async call
-                    fetchAndRenderDashboard(visitorIdFromUrl);
+    useEffect(() => { // Initial Config Fetch & Potential Data Load
+        if (!configFetchedRef.current) {
+            configFetchedRef.current = true;
+            fetchWpConfig().then(loadedConfig => {
+                if (loadedConfig) {
+                    setWpConfig(loadedConfig);
+                    if (visitorIdFromUrl && visitorIdFromUrl !== lastFetchedIdRef.current) {
+                        setVisitorIdInput(visitorIdFromUrl);
+                        lastFetchedIdRef.current = visitorIdFromUrl;
+                        loadDashboardForId(visitorIdFromUrl, loadedConfig);
+                    } else if (!visitorIdFromUrl) {
+                        setAppState('ready');
+                    }
                 }
-            } else { // No visitorIdFromUrl, reset to initial state
-                // console.log("PDS_NEXT_CLIENT: Data fetch EFFECT - No visitorIdFromUrl. Resetting UI state.");
-                setCurrentNocoRecord(null); setError(null); setShowNoDataMessage(true);
-                setCurrentStatusMessage('Enter a Visitor ID to begin.'); setVisitorIdInput(''); lastFetchedIdRef.current = null;
-            }
+            });
         }
-    }, [visitorIdFromUrl, wpConfig, fetchAndRenderDashboard, isLoading]); // isLoading added to dependencies
+    }, [fetchWpConfig, loadDashboardForId, visitorIdFromUrl]);
 
+    useEffect(() => { // Subsequent fetches based on URL change
+        if (wpConfig && visitorIdFromUrl && visitorIdFromUrl !== lastFetchedIdRef.current) {
+            setVisitorIdInput(visitorIdFromUrl);
+            lastFetchedIdRef.current = visitorIdFromUrl;
+            loadDashboardForId(visitorIdFromUrl, wpConfig);
+        } else if (wpConfig && !visitorIdFromUrl && lastFetchedIdRef.current !== null) {
+            setNocoData(null); setAppState('ready'); setVisitorIdInput('');
+            lastFetchedIdRef.current = null;
+        }
+    }, [visitorIdFromUrl, wpConfig, loadDashboardForId]);
 
     const handleFetchButtonClick = () => {
         const newVisitorId = visitorIdInput.trim();
+        if (!wpConfig) {
+            setErrorMessage("Dashboard is still initializing configuration. Please wait a moment or refresh.");
+            return;
+        }
         if (newVisitorId) {
-            // console.log("PDS_NEXT_CLIENT: Fetch Button CLICKED for ID:", newVisitorId);
-            // Always trigger a URL change to ensure useEffect handles the fetch,
-            // which simplifies state management and prevents duplicate fetch logic.
-            // shallow: false will re-run getServerSideProps/getStaticProps on page if defined,
-            // but for client-side routing like this, it mainly ensures data fetching effects re-run.
-            if (newVisitorId !== lastFetchedIdRef.current || error || !currentNocoRecord) {
-                 lastFetchedIdRef.current = null; // Reset to allow re-fetch by useEffect
-                 router.push(`/dashboard?visitor_id=${newVisitorId}`, undefined, { shallow: false });
-            } else {
-                // console.log("PDS_NEXT_CLIENT: Fetch button clicked for already loaded ID and no error. Re-initiating fetch for:", newVisitorId);
-                lastFetchedIdRef.current = null; // Allow re-fetch by useEffect
-                fetchAndRenderDashboard(newVisitorId); // Or let router.push trigger it
+            if (newVisitorId !== lastFetchedIdRef.current || appState === 'error' || appState === 'no_data_for_id') {
+                router.push(`/dashboard?visitor_id=${newVisitorId}`, undefined, { shallow: false });
             }
         } else {
-            setError('Please enter a Visitor ID.'); setCurrentStatusMessage('Please enter a Visitor ID.');
-            setShowNoDataMessage(true); setCurrentNocoRecord(null); lastFetchedIdRef.current = null;
-            router.push(`/dashboard`, undefined, { shallow: false }); // Clear URL param
+            setErrorMessage('Please enter a Visitor ID.');
+            if (visitorIdFromUrl) {
+                router.push(`/dashboard`, undefined, { shallow: false });
+            } else {
+                setNocoData(null); setAppState('ready'); lastFetchedIdRef.current = null;
+            }
         }
     };
     const handleInputChange = (e) => { setVisitorIdInput(e.target.value); };
-    const handleKeyPress = (e) => { if (e.key === 'Enter') { e.preventDefault(); handleFetchButtonClick(); } };
+    const handleKeyPress = (e) => { if (e.key === 'Enter') { e.preventDefault(); handleFetchButtonClick(); }};
 
+    // --- Derived Data for Rendering (from nocoData) ---
+    const firstName = nocoData?.first_name || 'Valued Lead';
+    const companyName = nocoData?.organization_name || 'Your Company';
+    const companyLogo = nocoData?.logo_url;
+    const companyWebsite = nocoData?.website_url;
+    const fromAbstract = nocoData?.from_abstract || 'achieving key strategic objectives';
+    const usp = nocoData?.company_usp;
+    const overviewShort = nocoData?.company_overview_short;
+    const founderBio = nocoData?.founder_bio_snippet;
+    const keyChallengeOpportunity = nocoData?.key_challenge_or_opportunity;
+    const coreServicesListString = nocoData?.core_services_list;
+    const deepResearchMd = nocoData?.deep_reaserach; // Ensure this name matches NocoDB field
+    const dynamicKpisString = nocoData?.kpi_data;
 
-    const hasData = currentNocoRecord && typeof currentNocoRecord === 'object' && Object.keys(currentNocoRecord).length > 0 && !isLoading && !error;
-   
-    const firstName = hasData ? (currentNocoRecord.first_name || 'Valued Lead') : 'Visitor';
-    const companyNameFromAPI = hasData ? (currentNocoRecord['organization/name'] || currentNocoRecord.company_short) : null;
-    const companyName = companyNameFromAPI || (hasData ? 'Company' : 'Your Company');
-
-
-    let personalizedGreetingHtml = '';
-    if (!wpConfig && !isLoading && !error) { personalizedGreetingHtml = `<p class="lead" style="color: var(--text-muted);">Initializing dashboard...</p>`; }
-    else if (hasData) {
-        const fromAbstractText = currentNocoRecord.from_abstract;
-        const companyNameForGreeting = currentNocoRecord['organization/name'] || 'your organization';
-        personalizedGreetingHtml = `<p class="lead">Hi ${escapeHtml(firstName)}, this dashboard highlights how MakerToo can assist ${escapeHtml(companyNameForGreeting)} in <strong>${escapeHtml(fromAbstractText || 'achieving key strategic objectives')}</strong>.</p>`;
-        personalizedGreetingHtml += `<p>Explore below for tailored insights and our detailed research.</p>`;
-    } else if (isLoading) { personalizedGreetingHtml = `<p class="lead" style="color: var(--text-secondary);">Loading personalized insights for ID: ${visitorIdInput || visitorIdFromUrl || '...'} </p>`;}
-    else if (error) { personalizedGreetingHtml = `<p class="lead" style="color: var(--accent-pink);">Attention Required</p><p>We encountered an issue loading your personalized data. Please double-check the Visitor ID or try again. If the problem persists, support has been notified.</p>`;}
-    else { personalizedGreetingHtml = `<p class="lead">Welcome to Your Personalized Dashboard!</p><p>Please enter your unique Visitor ID above to unlock tailored insights.</p>`;}
-
-
-    let companyAtAGlanceHtml = '';
-    if (hasData) {
-        const logoUrl = currentNocoRecord['organization/logo_url'];
-        const usp = currentNocoRecord.extracted_company_profile_usp;
-        const overview = currentNocoRecord.extracted_company_overview;
-        const founderSummary = currentNocoRecord.extracted_founder_profile_summary;
-        const companyWebsite = currentNocoRecord['organization/website_url'];
-
-
-        if (logoUrl && logoUrl.startsWith('http')) {
-            companyAtAGlanceHtml += `<div style="text-align:center; margin-bottom: 20px;">`;
-            if (companyWebsite && companyWebsite.startsWith('http')) companyAtAGlanceHtml += `<a href="${escapeHtml(companyWebsite)}" target="_blank" rel="noopener noreferrer">`;
-            companyAtAGlanceHtml += `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(companyName)} Logo" style="max-height: 70px; max-width: 180px; display: inline-block; border-radius: var(--border-radius-sm); background-color: #fff; padding: 5px; box-shadow: var(--shadow-soft);">`;
-            if (companyWebsite && companyWebsite.startsWith('http')) companyAtAGlanceHtml += `</a>`;
-            companyAtAGlanceHtml += `</div>`;
-        }
-        companyAtAGlanceHtml += `<h3>About ${escapeHtml(companyName)}:</h3>`;
-        if (usp) companyAtAGlanceHtml += `<p><strong>Unique Selling Proposition:</strong> ${escapeHtml(usp)}</p>`;
-        if (overview) companyAtAGlanceHtml += `<p><strong>Overview:</strong> ${escapeHtml(overview)}</p>`;
-        if (founderSummary) companyAtAGlanceHtml += `<p><strong>Key Leadership Insights:</strong> ${escapeHtml(founderSummary)}</p>`;
-        if (!usp && !overview && !founderSummary) companyAtAGlanceHtml += `<p>Detailed company information for ${escapeHtml(companyName)} will be presented here.</p>`;
-    } else if (!isLoading && !error && showNoDataMessage) { companyAtAGlanceHtml += `<h3>About Your Company:</h3><p>Insights will appear once data is loaded.</p>`; }
-
-
-
-
-    let growthOpportunitiesHtml = '';
-    if (hasData && currentNocoRecord.structured_core_services) {
-        try {
-            const servicesArray = JSON.parse(currentNocoRecord.structured_core_services);
-            if (Array.isArray(servicesArray) && servicesArray.length > 0) {
-                growthOpportunitiesHtml = `<ul><li>Leveraging your strengths in <strong>${servicesArray.map(s => escapeHtml(s)).join(', ')}</strong>, MakerToo can help:</li><li><strong>Amplify Impact:</strong> Custom AI & automation to scale your core offerings.</li><li><strong>Boost Efficiency:</strong> Streamline workflows with n8n and open-source backends.</li><li><strong>Ensure Data Sovereignty:</strong> Full control with private databases & CRMs.</li></ul>`;
-            } else { growthOpportunitiesHtml = "<p>Analysis of core services to identify specific growth opportunities is in progress.</p>"; }
-        } catch (e) { growthOpportunitiesHtml = "<p>Unable to display specific growth opportunities at this time.</p>";}
-    } else if (!isLoading && !error && showNoDataMessage) { growthOpportunitiesHtml = "<p>Tailored growth opportunities will be highlighted here.</p>";}
-
+    let coreServices = [];
+    if (coreServicesListString) { try { coreServices = JSON.parse(coreServicesListString); } catch (e) { console.warn("Could not parse core services list:", e); } }
 
     let kpisToShow = [
-        { label: "Strategic Alignment", value: "High", target: "With MakerToo's Open-Source Focus", icon: "dashicons-admin-links" },
-        { label: "Innovation Potential", value: "Significant", target: "Via Custom AI/Automation", icon: "dashicons-lightbulb" },
-        { label: "Data Control", value: "Total", target: "Through Private Infrastructure", icon: "dashicons-lock" },
-        { label: "Future Scalability", value: "Assured", target: "With Flexible Tech Stacks", icon: "dashicons-backup" },
+        { label: "Strategic Alignment", value: "High", target: "With MakerToo*s Open-Source Focus", icon: "dashicons-admin-links", color: "var(--accent-purple)" },
+        { label: "Innovation Potential", value: "Significant", target: "Via Custom AI/Automation", icon: "dashicons-lightbulb", color: "var(--accent-blue)" },
+        { label: "Data Control", value: "Total", target: "Through Private Infrastructure", icon: "dashicons-lock", color: "var(--accent-green)" },
+        { label: "Future Scalability", value: "Assured", target: "With Flexible Tech Stacks", icon: "dashicons-backup", color: "var(--accent-pink)" },
     ];
-    if (hasData && currentNocoRecord.kpi_data) {
-        try {
-            const dynamicKpis = JSON.parse(currentNocoRecord.kpi_data);
-            if (Array.isArray(dynamicKpis) && dynamicKpis.length > 0) kpisToShow = dynamicKpis;
-        } catch (e) { /* console.warn("PDS_NEXT_CLIENT: Could not parse kpi_data from NocoDB.", e); */ }
-    }
+    if (dynamicKpisString) { try { const parsed = JSON.parse(dynamicKpisString); if(Array.isArray(parsed) && parsed.length > 0) kpisToShow = parsed; } catch(e) { console.warn("Could not parse KPI data:", e); } }
 
+    const chartOptions = chartColorsRef.current ? getChartJsDefaultOptions(chartColorsRef.current) : {};
+    const doughnutChartOptions = chartColorsRef.current ? { ...chartOptions, cutout: '60%', plugins: { ...chartOptions.plugins, legend: { ...chartOptions.plugins?.legend, position: 'bottom' } } } : {};
+    const illustrativeRevenueData = chartColorsRef.current ? { labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Next Q (Proj.)'], datasets: [{ label: 'Potential Revenue Growth', data: [50, 65, 80, 75, 95], borderColor: chartColorsRef.current.primary, backgroundColor: `rgba(${chartColorsRef.current.accentGreenRgb}, 0.15)`, tension: 0.3, fill: true, pointBackgroundColor: chartColorsRef.current.primary, pointBorderColor: chartColorsRef.current.tooltipText, pointHoverBackgroundColor: chartColorsRef.current.tooltipText, pointHoverBorderColor: chartColorsRef.current.primary }] } : {labels:[], datasets:[]};
+    const illustrativeEfficiencyData = chartColorsRef.current ? { labels: ['Manual', 'Phase 1 Auto.', 'Phase 2 AI Opt.'], datasets: [{ label: 'Task Processing Time (Hours)', data: [100, 60, 30], backgroundColor: `rgba(${chartColorsRef.current.accentBlueRgb}, 0.7)`, borderColor: `rgb(${chartColorsRef.current.accentBlueRgb})`, borderWidth: 1, borderRadius: 4,}] } : {labels:[], datasets:[]};
+    const illustrativeProjectCompletionData = chartColorsRef.current ? { labels: ['On Track', 'At Risk (Mitigated)', 'New Initiatives'], datasets: [{ label: 'Project Status Distribution', data: [70, 15, 15], backgroundColor: [`rgb(${chartColorsRef.current.accentGreenRgb})`, `rgba(${chartColorsRef.current.accentBlueRgb}, 0.7)`, `rgba(${chartColorsRef.current.accentPinkRrgb}, 0.6)`], hoverOffset: 8, borderColor: chartColorsRef.current.tooltipBg || '#10151B', borderWidth: 2 }] } : {labels:[], datasets:[]};
 
-    let fullDeepResearchHtml = "<p>Your comprehensive research report will be accessible here, providing in-depth analysis and strategic recommendations.</p>";
-    if (hasData && currentNocoRecord.deep_reaserach) { // Match CSV typo 'deep_reaserach'
-        try { fullDeepResearchHtml = marked.parse(currentNocoRecord.deep_reaserach); }
-        catch (e) { fullDeepResearchHtml = `<pre>${escapeHtml(currentNocoRecord.deep_reaserach)}</pre>`;}
-    }
-   
-    const displayDashboardContent = hasData; // Main condition to show content sections
-
-
-    const getChartJsDefaultOptions = useCallback((customColors = {}) => {
-        if (typeof window === 'undefined') return { scales: { y: {}, x: {} }, plugins: { legend: {}, tooltip: {} } };
-        const rootStyles = getComputedStyle(document.documentElement);
-        const safeGet = (prop, fb) => rootStyles.getPropertyValue(prop).trim() || fb;
-        const chartColors = { /* ... same as your previous getChartJsDefaultOptions ... */
-            primary: safeGet('--accent-green', '#00ffcc'), secondary: safeGet('--accent-blue', '#00bfff'), pink: safeGet('--accent-pink', '#ff007f'),
-            grid: `rgba(${safeGet('--text-rgb-secondary', '192,192,208')}, 0.1)`, ticks: safeGet('--text-muted', '#888e9f'),
-            tooltipBg: safeGet('--bg-dark-secondary', '#10151B'), tooltipText: safeGet('--text-light', '#f0f0f5'),
-            fontFamily: safeGet('--font-primary', 'Montserrat, sans-serif').split(',')[0].trim(),
-        };
-        return { responsive: true, maintainAspectRatio: false, color: chartColors.ticks,
-            scales: { y: { beginAtZero: true, grid: { color: chartColors.grid, borderColor: chartColors.grid }, ticks: { color: chartColors.ticks, font: { family: chartColors.fontFamily } } },
-                      x: { grid: { display: false, borderColor: chartColors.grid }, ticks: { color: chartColors.ticks, font: { family: chartColors.fontFamily } } } },
-            plugins: { legend: { position: 'top', labels: { color: chartColors.ticks, font: { family: chartColors.fontFamily } } },
-                       tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.tooltipText, bodyColor: chartColors.tooltipText, titleFont: { family: chartColors.fontFamily }, bodyFont: { family: chartColors.fontFamily }, borderColor: chartColors.primary, borderWidth: 1 } },
-            animation: { duration: 600, easing: 'easeOutQuart' }
-        };
-    }, []);
-    const defaultChartOptions = getChartJsDefaultOptions();
-    const getRgbColor = useCallback((cssVar, fallbackRgb) => {
-        if (typeof window === 'undefined') return fallbackRgb;
-        return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim() || fallbackRgb;
-    }, []);
-
-
-    const illustrativeRevenueData = { /* ... same illustrative data ... */
-        labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Next Q (Proj.)'], datasets: [{ label: 'Potential Revenue Growth', data: [50, 65, 80, 75, 95], borderColor: defaultChartOptions.plugins?.tooltip?.borderColor || '#00ffcc', backgroundColor: `rgba(${getRgbColor('--accent-green-rgb', '0,255,204')}, 0.15)`, tension: 0.3, fill: true,}]
-    };
-    const illustrativeEfficiencyData = { /* ... same illustrative data ... */
-        labels: ['Manual', 'Phase 1 Auto.', 'Phase 2 AI Opt.'], datasets: [{ label: 'Task Processing Time (Hours)', data: [100, 60, 30], backgroundColor: `rgba(${getRgbColor('--accent-blue-rgb', '0,191,255')}, 0.7)`, borderColor: `rgb(${getRgbColor('--accent-blue-rgb', '0,191,255')})`, borderWidth: 1, borderRadius: 4,}]
-    };
-    const illustrativeProjectCompletionData = { /* ... same illustrative data ... */
-        labels: ['On Track', 'At Risk (Mitigated)', 'New Initiatives'], datasets: [{ label: 'Project Status Distribution', data: [70, 15, 15], backgroundColor: [`rgb(${getRgbColor('--accent-green-rgb', '0,255,204')})`, `rgba(${getRgbColor('--accent-blue-rgb', '0,191,255')}, 0.7)`, `rgba(${getRgbColor('--accent-pink-rgb', '255,0,127')}, 0.6)`], hoverOffset: 6, borderColor: defaultChartOptions.plugins?.tooltip?.backgroundColor || '#10151B', borderWidth: 2 }]
-    };
-    const doughnutChartOptions = { ...defaultChartOptions, cutout: '60%', plugins: { ...defaultChartOptions.plugins, legend: { ...defaultChartOptions.plugins?.legend, position: 'bottom' } } };
-
-
-
+    let statusMessage = 'Enter a Visitor ID to begin.';
+    if (appState === 'initializing' || appState === 'initializing_config') statusMessage = 'Initializing dashboard services...';
+    else if (appState === 'loading') statusMessage = `Fetching personalized insights for ID: ${escapeHtml(visitorIdInput) || '...'} `;
+    else if (appState === 'error') statusMessage = errorMessage;
+    else if (appState === 'no_data_for_id') statusMessage = errorMessage;
+    else if (appState === 'data_loaded' && nocoData) statusMessage = `Showing personalized data for: ${escapeHtml(firstName)} from ${escapeHtml(companyName)}`;
 
     return (
         <>
             <Head>
-                 <title>{`Dashboard - ${hasData ? `${firstName} @ ${companyName}` : (visitorIdFromUrl || visitorIdInput ? 'Loading...' : 'Welcome')}`}</title>
-                <meta name="description" content={`Personalized dashboard insights ${hasData ? `for ${companyName}` : 'by MakerToo'}`} />
-                <link rel="icon" href="/favicon.ico" /> {/* Make sure you have a favicon.ico in your /public folder */}
+                <title>{`MakerToo Dashboard - ${appState === 'data_loaded' && nocoData ? `${escapeHtml(firstName)} @ ${escapeHtml(companyName)}` : (visitorIdInput ? 'Loading...' : 'Welcome')}`}</title>
+                <meta name="description" content={`Personalized dashboard insights ${appState === 'data_loaded' && nocoData ? `for ${escapeHtml(companyName)}` : 'by MakerToo'}. Unlock your AI and Automation advantage.`} />
+                <meta name="robots" content="noindex, nofollow" />
+                <link rel="icon" href="/favicon.ico" /> {/* ACTION: Update to your actual favicon path in /public */}
             </Head>
-
 
             <main id="primary" className="site-main personalized-dashboard-page-area">
                 <div className="personalized-dashboard-container">
-                    {/* Header Section */}
-                    <div className="dashboard-header">
-                        <h1>
-                            <span className="dashicons dashicons-admin-users" style={{ marginRight: '10px', verticalAlign: 'middle' }}></span>
-                            Welcome, <span id="visitor-name-header">{firstName}{companyName !== 'Your Company' && companyName !== 'Company' && companyName ? ` from ${companyName}` : ''}</span>!
-                        </h1>
-                        <div id="personalized-greeting" dangerouslySetInnerHTML={{ __html: personalizedGreetingHtml }}></div>
-                    </div>
+                    <header className="dashboard-header">
+                         {appState === 'data_loaded' && nocoData ? (
+                             <>
+                                <h1>
+                                    <span className="dashicons dashicons-admin-users"></span>
+                                    Welcome, <span>{escapeHtml(firstName)}{companyName !== 'Your Company' ? ` from ${escapeHtml(companyName)}` : ''}</span>!
+                                </h1>
+                                <p className="lead">This dashboard highlights how MakerToo can assist {escapeHtml(companyName)} in <strong>{escapeHtml(fromAbstract)}</strong>.</p>
+                                <p>Explore below for tailored insights and our detailed research.</p>
+                            </>
+                        ) : (appState === 'loading' || appState === 'initializing' || appState === 'initializing_config') ? (
+                            <><h1><span className="dashicons dashicons-update"></span>Loading Dashboard...</h1><p className="lead" style={{ color: 'var(--text-secondary)' }}>Crafting your personalized experience...</p></>
+                        ) : (appState === 'error' || appState === 'no_data_for_id') ? (
+                             <>
+                                <h1><span className="dashicons dashicons-warning" style={{color: 'var(--accent-pink)'}}></span>Attention Required</h1>
+                                <p>{errorMessage || "An issue occurred preventing data load."}</p>
+                                <p>Please double-check the Visitor ID or try refreshing. If the problem persists, the link may be invalid or you can contact support.</p>
+                            </>
+                        ) : ( // Ready state
+                            <>
+                                <h1><span className="dashicons dashicons-admin-home"></span>Welcome to Your Personalized Dashboard!</h1>
+                                <p className="lead">Please enter your unique Visitor ID above to unlock tailored insights.</p>
+                            </>
+                        )}
+                    </header>
 
-
-                    {/* Visitor Input Area */}
-                    <div className="visitor-input-area">
-                        <input type="text" id="visitorIdInput" placeholder="Enter Your Visitor ID" value={visitorIdInput} onChange={handleInputChange} onKeyPress={handleKeyPress} disabled={isLoading || !wpConfig} aria-label="Visitor ID Input"/>
-                        <button id="fetchDataButton" className="button button-primary" onClick={handleFetchButtonClick} disabled={isLoading || !wpConfig}>
-                            <span className="dashicons dashicons-search" style={{ marginRight: '5px', verticalAlign: 'text-bottom' }}></span>Unlock Insights
+                    <section className="visitor-input-area">
+                        <input type="text" id="visitorIdInput" placeholder="Enter Your Visitor ID" value={visitorIdInput} onChange={handleInputChange} onKeyPress={handleKeyPress} disabled={appState === 'loading' || appState === 'initializing' || appState === 'initializing_config' || !wpConfig} aria-label="Visitor ID Input"/>
+                        <button id="fetchDataButton" className="button button-primary" onClick={handleFetchButtonClick} disabled={appState === 'loading' || appState === 'initializing' || appState === 'initializing_config' || !wpConfig}>
+                            <span className="dashicons dashicons-unlock"></span>Unlock Insights
                         </button>
-                        <p id="currentVisitorStatus" className="visitor-status-message">{currentStatusMessage}</p>
-                    </div>
+                        <p id="currentVisitorStatus" className="visitor-status-message">{statusMessage}</p>
+                    </section>
 
-
-                    {/* Loading, Error, No Data Messages */}
-                    // Updated block for appState === 'loading' or 'initializing_config'
                     {(appState === 'loading' || appState === 'initializing_config') && (
-                     <div className="dashboard-section card" style={{ textAlign: 'center', padding: '40px 20px', margin: '20px 0' }}>
-                      <div style={{display: 'flex', justifyContent: 'center', marginBottom: '20px'}}>
-                     <ClipLoader
-                          color={"var(--accent-green)"} // Uses your CSS variable
-                          loading={true}
-                           size={50} // Adjust size as needed
-                           aria-label="Loading Spinner"
-                            data-testid="loader"
-                                       />
-                       </div>
-                         <p style={{ fontSize: '1.1em', color: 'var(--text-secondary)' }}>
-                            {appState === 'initializing_config' ? 'Initializing dashboard services...' : 'Crafting your personalized experience...'}
-                              </p>
-                                  </div>
-                    )}
-                    {error && !isLoading && (<div className="dashboard-message error" style={{margin: '20px 0'}}><span className="dashicons dashicons-warning" style={{marginRight: '8px'}}></span>{error}</div>)}
-                    {showNoDataMessage && !isLoading && !error && !hasData && (
-                        <div className="dashboard-message info" style={{margin: '20px 0'}}>
-                            {!wpConfig ? <p><span className="dashicons dashicons-info" style={{marginRight:'8px'}}></span>Initializing dashboard services. Please wait a moment...</p> : <p><span className="dashicons dashicons-info" style={{marginRight:'8px'}}></span>Please enter your unique Visitor ID to access your personalized insights.</p>}
+                        <div className="dashboard-section card" style={{ textAlign: 'center', padding: '40px 20px', margin: '20px 0' }}>
+                            <div style={{display: 'flex', justifyContent: 'center', marginBottom: '20px'}}>
+                                <ClipLoader
+                                    color={"var(--accent-green)"}
+                                    loading={true}
+                                    size={50}
+                                    aria-label="Loading Spinner"
+                                    data-testid="loader"
+                                />
+                            </div>
+                            <p style={{ fontSize: '1.1em', color: 'var(--text-secondary)' }}>
+                                {appState === 'initializing_config' ? 'Initializing dashboard services...' : 'Crafting your personalized experience...'}
+                            </p>
                         </div>
                     )}
 
-
-                    {/* Main Dashboard Content Sections - Rendered only if hasData */}
-                    {displayDashboardContent && (
-                        <div id="dashboard-content">
-                            <section id="intro-insights-section" className="dashboard-section card">
-                                <h2 className="section-title"><span className="dashicons dashicons-megaphone"></span>Your Personalized Briefing</h2>
-                                <div id="company-at-a-glance" dangerouslySetInnerHTML={{ __html: companyAtAGlanceHtml }}></div>
-                                <h3 className="subsection-title">Key Growth Opportunities with MakerToo:</h3>
-                                <div id="growth-opportunities-list" dangerouslySetInnerHTML={{ __html: growthOpportunitiesHtml }}></div>
+                    {appState === 'data_loaded' && nocoData && (
+                        <div id="dashboard-content-wrapper" className="fade-in-content">
+                            <section id="briefing-section" className="dashboard-section card">
+                                <h2 className="section-title">
+                                    <span className="dashicons dashicons-testimonial"></span> {/* Icon color purple from CSS */}
+                                    Understanding {escapeHtml(companyName)}
+                                </h2>
+                                {companyLogo && companyLogo.startsWith('http') && (
+                                    <div className="company-logo-container">
+                                       <a href={companyWebsite && companyWebsite.startsWith('http') ? escapeHtml(companyWebsite) : '#'} target="_blank" rel="noopener noreferrer" title={`${escapeHtml(companyName)} Website`}>
+                                            <img src={escapeHtml(companyLogo)} alt={`${escapeHtml(companyName)} Logo`} className="company-logo" />
+                                        </a>
+                                    </div>
+                                )}
+                                {overviewShort && <><h3 className="subsection-title">Company Snapshot</h3><p>{escapeHtml(overviewShort)}</p></>}
+                                {usp && <><h3 className="subsection-title">Unique Selling Proposition</h3><p>{escapeHtml(usp)}</p></>}
+                                {founderBio && <><h3 className="subsection-title">About the Leadership</h3><p>{escapeHtml(founderBio)}</p></>}
                             </section>
 
+                            {keyChallengeOpportunity && (
+                                <section id="key-focus-section" className="dashboard-section card">
+                                    <h2 className="section-title">
+                                        <span className="dashicons dashicons-admin-generic"></span> {/* Icon color green from CSS */}
+                                        Strategic Focus for {escapeHtml(companyName)}
+                                    </h2>
+                                    <h3 className="subsection-title">Identified Key Area:</h3>
+                                    <p style={{fontSize: "1.05em", fontWeight: "500", color: "var(--text-primary)"}}>{escapeHtml(keyChallengeOpportunity)}</p>
+                                    <h3 className="subsection-title">How MakerToo Addresses This:</h3>
+                                    <p>MakerToo specializes in crafting bespoke AI and automation solutions, leveraging open-source technology to provide data sovereignty and drive measurable results. We can help {escapeHtml(companyName)} directly tackle this key area by:</p>
+                                    <ul className="styled-list">
+                                        <li>Developing tailored automation to streamline relevant processes, freeing up resources for strategic growth.</li>
+                                        <li>Implementing AI-driven insights to inform strategy and enhance decision-making around this specific challenge or opportunity.</li>
+                                        <li>Building robust, scalable open-source backends that give you full control over the data crucial to capitalizing on this area.</li>
+                                    </ul>
+                                </section>
+                            )}
 
-                            <section id="kpi-section" className="dashboard-section card">
-                                <h2 className="section-title"><span className="dashicons dashicons-performance"></span>Projected Impact on Key Metrics</h2>
+                            {coreServices && coreServices.length > 0 && (
+                                <section id="growth-opportunities-section" className="dashboard-section card">
+                                    <h2 className="section-title">
+                                        <span className="dashicons dashicons-awards"></span> {/* Icon color blue from CSS */}
+                                        Leveraging Your Strengths
+                                    </h2>
+                                    <p>Based on {escapeHtml(companyName)}*s core services in <strong>{coreServices.map(s => escapeHtml(s)).join(', ')}</strong>, MakerToo can partner with you to:</p>
+                                    <ul className="styled-list">
+                                        <li><strong>Amplify Service Impact:</strong> Integrate custom AI tools to enhance the delivery and effectiveness of your core offerings.</li>
+                                        <li><strong>Boost Operational Efficiency:</strong> Streamline backend workflows related to these services using n8n automation and efficient open-source databases.</li>
+                                        <li><strong>Unlock New Service Potential:</strong> Utilize your existing data (with full data sovereignty) to identify and develop new, AI-augmented service lines.</li>
+                                    </ul>
+                                </section>
+                            )}
+                            
+                             <section id="kpi-section" className="dashboard-section card">
+                                <h2 className="section-title"><span className="dashicons dashicons-performance"></span>Projected Impact with MakerToo</h2>
                                 <div className="kpi-cards-container">
                                     {kpisToShow.map((kpi, index) => (
-                                         <div className="kpi-card" key={index}>
-                                             <div className="kpi-label"><span className={`dashicons ${escapeHtml(kpi.icon || 'dashicons-star-filled')}`} style={{ marginRight: '5px' }}></span>{escapeHtml(kpi.label)}</div>
-                                             <div className="kpi-value">{escapeHtml(kpi.value)}{kpi.unit_suffix ? <span className="kpi-unit">{escapeHtml(kpi.unit_suffix)}</span> : ''}</div>
-                                             <div className="kpi-target"><small>{escapeHtml(kpi.target)}</small></div>
-                                             {kpi.trend && kpi.trend !== 'neutral' && <div className={`kpi-trend ${kpi.trend}`}><span className={`dashicons dashicons-arrow-${kpi.trend === 'up' ? 'up' : 'down'}-alt`}></span></div>}
-                                         </div>
-                                    ))}
+                                       <div key={index} className="kpi-card" style={kpi.color ? {borderLeftColor: kpi.color} : {}}>
+                                           <div className="kpi-label">
+                                                {kpi.icon && <span className={`dashicons ${escapeHtml(kpi.icon)}`} style={kpi.color ? {color: kpi.color} : {}}></span>}
+                                                {escapeHtml(kpi.label)}
+                                            </div>
+                                           <div className="kpi-value" style={kpi.color ? {color: kpi.color} : {}}>{escapeHtml(kpi.value)}{kpi.unit_suffix ? <span className="kpi-unit">{escapeHtml(kpi.unit_suffix)}</span> : ''}</div>
+                                           {kpi.target && <div className="kpi-target"><small>{escapeHtml(kpi.target)}</small></div>}
+                                       </div>
+                                   ))}
                                 </div>
                             </section>
-
 
                             <section id="analytics-overview" className="dashboard-section card">
                                 <h2 className="section-title"><span className="dashicons dashicons-chart-area"></span>Illustrative Performance Projections</h2>
-                                <p style={{textAlign: 'center', marginBottom: '30px', color: 'var(--text-secondary)'}}>
-                                    Visualizing the potential impact of MakerToo*s solutions for {companyName}.
-                                </p>
-                                <div className="charts-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '25px'}}>
+                                <p style={{textAlign: 'center', marginBottom: '30px', color: 'var(--text-secondary)'}}>Visualizing the potential impact of MakerToo*s solutions for {escapeHtml(companyName)}. These are illustrative projections based on common outcomes.</p>
+                                <div className="charts-grid">
                                     <div className="chart-container-wrapper">
-                                        <h3 className="subsection-title" style={{textAlign:'center'}}><span className="dashicons dashicons-chart-line" style={{ marginRight: '5px' }}></span>Revenue Trajectory</h3>
-                                        <div className="chart-container" style={{ height: '300px' }}><Line options={defaultChartOptions} data={illustrativeRevenueData} /></div>
+                                        <h3 className="subsection-title chart-title"><span className="dashicons dashicons-chart-line"></span>Accelerated Revenue Trajectory</h3>
+                                        <div className="chart-container" style={{ height: '300px' }}>{chartColorsRef.current && <Line options={chartOptions} data={illustrativeRevenueData} />}</div>
                                     </div>
                                     <div className="chart-container-wrapper">
-                                        <h3 className="subsection-title" style={{textAlign:'center'}}><span className="dashicons dashicons-performance" style={{ marginRight: '5px' }}></span>Operational Efficiency</h3>
-                                        <div className="chart-container" style={{ height: '300px' }}><Bar options={defaultChartOptions} data={illustrativeEfficiencyData} /></div>
+                                        <h3 className="subsection-title chart-title"><span className="dashicons dashicons-controls-fastforward"></span>Enhanced Operational Efficiency</h3>
+                                        <div className="chart-container" style={{ height: '300px' }}>{chartColorsRef.current && <Bar options={chartOptions} data={illustrativeEfficiencyData} />}</div>
                                     </div>
                                 </div>
                                 <div className="chart-container-wrapper" style={{ marginTop: '40px' }}>
-                                    <h3 className="subsection-title" style={{textAlign:'center'}}><span className="dashicons dashicons-yes-alt" style={{ marginRight: '5px' }}></span>Strategic Initiative Focus</h3>
-                                    <div className="chart-container" style={{ height: '300px', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
-                                        <Doughnut options={doughnutChartOptions} data={illustrativeProjectCompletionData} />
+                                    <h3 className="subsection-title chart-title"><span className="dashicons dashicons-filter"></span>Strategic Initiative Focus</h3>
+                                    <div className="chart-container" style={{ height: '320px', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
+                                        {chartColorsRef.current && <Doughnut options={doughnutChartOptions} data={illustrativeProjectCompletionData} />}
                                     </div>
                                 </div>
                             </section>
 
+                            {deepResearchMd && (
+                                <section id="full-research-section" className="dashboard-section card">
+                                    <h2 className="section-title"><span className="dashicons dashicons-book-alt"></span>Dive Deeper: Full Research for {escapeHtml(companyName)}</h2>
+                                    <p>The following is the detailed research report compiled to understand {escapeHtml(companyName)}*s unique market position and opportunities. This research underpins the strategies we propose.</p>
+                                    <div id="deep-research-accordion" className="accordion">
+                                        <div className="accordion-item">
+                                            <button
+                                               className="accordion-button"
+                                               onClick={() => setIsResearchAccordionOpen(!isResearchAccordionOpen)}
+                                               aria-expanded={isResearchAccordionOpen}
+                                               aria-controls="deep-research-content-panel"
+                                            >
+                                               {isResearchAccordionOpen ? 'Hide Full Research Report' : 'View Full Research Report'}
+                                               <span className={`dashicons ${isResearchAccordionOpen ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2'}`}></span>
+                                            </button>
+                                            <div
+                                               id="deep-research-content-panel"
+                                               className={`accordion-content ${isResearchAccordionOpen ? 'open' : ''}`}
+                                               dangerouslySetInnerHTML={renderMarkdownForHTML(deepResearchMd)}
+                                            ></div>
+                                       </div>
+                                   </div>
+                                </section>
+                            )}
 
-                            <section id="full-research-section" className="dashboard-section card">
-                                <h2 className="section-title"><span className="dashicons dashicons-book-alt"></span>Dive Deeper: Full Research for <span id="visitor-company-report-title">{companyName}</span></h2>
-                                <p>The following is the detailed research report compiled to understand unique positions and opportunities.</p>
-                                <div id="deep-research-accordion" className="accordion">
-                                    <div className="accordion-item">
-                                        <button className="accordion-header" aria-expanded={isAccordionOpen} onClick={() => setIsAccordionOpen(!isAccordionOpen)}>
-                                            View Full Research Report
-                                            <span className={`accordion-icon dashicons ${isAccordionOpen ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2'}`}></span>
-                                        </button>
-                                        {isAccordionOpen && (
-                                            <div className="accordion-content" role="region" aria-labelledby="accordion-header-research"> {/* Ensure button has id="accordion-header-research" */}
-                                                <div id="full-deep-research-content" dangerouslySetInnerHTML={{ __html: fullDeepResearchHtml }}></div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </section>
-
-
-                            <section id="booking-section" className="dashboard-section card">
-                                <h2 className="section-title"><span className="dashicons dashicons-calendar-alt"></span>Ready to Implement, <span id="visitor-name-cta">{firstName}</span>?</h2>
-                                <p>Let*s discuss how MakerToo can architect and implement these AI & Automation strategies for <span id="visitor-company-cta">{companyName}</span>.</p>
+                             <section id="booking-section" className="dashboard-section card">
+                                <h2 className="section-title"><span className="dashicons dashicons-calendar-alt"></span>Ready to Elevate {escapeHtml(companyName)}, {escapeHtml(firstName)}?</h2>
+                                <p>Let*s schedule a complimentary strategy session to discuss how MakerToo can architect and implement these AI & Automation solutions, tailored specifically for your goals.</p>
                                 <div id="booking-widget-container" className="booking-widget">
-                                    {wpConfig && wpConfig.bookingLink && !wpConfig.bookingLink.includes("YOUR_") ? (
-                                        <iframe src={wpConfig.bookingLink} title="Schedule a Consultation" loading="lazy"
-                                                style={{ width: '100%', height: '550px', border: 'none', borderRadius: 'var(--border-radius-md)' }}/>
+                                    {wpConfig && wpConfig.bookingLink && !wpConfig.bookingLink.includes("YOUR_") && !wpConfig.bookingLink.includes("page-slug") && !wpConfig.bookingLink.includes("calendar-embed") ? (
+                                        <iframe
+                                            src={wpConfig.bookingLink}
+                                            title={`Schedule a Consultation with MakerToo for ${escapeHtml(companyName)}`}
+                                            loading="lazy"
+                                            style={{ width: '100%', height: '700px', border: 'none', borderRadius: 'var(--border-radius-md)' }}/>
                                     ) : (
-                                        <div className="booking-placeholder" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', textAlign: 'center' }}>
-                                            <span className="dashicons dashicons-clock" style={{ fontSize: '3em', marginBottom: '10px' }}></span>
-                                            <p>Booking options are being configured. Please check back or contact us directly.</p>
-                                        </div>
-                                    )}
+                                       <div className="booking-placeholder">
+                                           <span className="dashicons dashicons-clock"></span>
+                                           <p>Booking options are currently being finalized. Please check back shortly.</p>
+                                           {/* ACTION: Replace with your actual contact email */}
+                                           <p>Alternatively, please reply to the email you received, or contact us directly at <a href="mailto:hello@makertoo.com">hello@makertoo.com</a>.</p>
+                                           { (wpConfig?.bookingLink && (wpConfig.bookingLink.includes("YOUR_") || wpConfig.bookingLink.includes("page-slug") || wpConfig.bookingLink.includes("calendar-embed")) ) && <p style={{fontSize: '0.8em', marginTop: '10px', color: 'var(--accent-pink)'}}>Admin Note: Booking link requires configuration.</p>}
+                                       </div>
+                                   )}
                                 </div>
                             </section>
                         </div>
-                    )} {/* End #dashboard-content conditional rendering */}
-                </div> {/* End .personalized-dashboard-container */}
+                    )}
+                </div>
             </main>
         </>
     );
