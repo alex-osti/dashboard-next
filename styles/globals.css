@@ -1,659 +1,371 @@
+/* styles/globals.css */
+
+/* --- Google Fonts & Dashicons Import --- */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Orbitron:wght@500;600;700&display=swap');
-/* ==========================================================================
-   NEW PROFESSIONAL DARK DASHBOARD STYLES - ENHANCED
-   ========================================================================== */
+@import url('https://developer.wordpress.org/wp-includes/css/dashicons.min.css');
 
-
-
-
-/* --- CSS Variables (Ensure these are defined or define them here) --- */
+/* --- Root CSS Variables (Dark Theme) --- */
 :root {
-    --bg-dark-primary: #0A0F14;      /* Near-black for main page */
-    --bg-dark-secondary: #10151B;   /* Dark card background */
-    --bg-dark-tertiary: #181F27;   /* Slightly lighter for accents/hovers */
-    --bg-input: #0A0F14;            /* Darker input background */
+    --bg-dark-primary: #0A0F14;
+    --bg-dark-secondary: #10151B;
+    --bg-dark-tertiary: #181F27;
+    --bg-input: #0D1218;
 
+    --text-light: #f0f0f5;
+    --text-primary: #d0d0e0;
+    --text-secondary: #a0a0b8;
+    --text-muted: #787e8f;
+    --text-rgb-secondary-raw: 160, 160, 184;
 
-
-
-    --text-light: #f0f0f5;          /* Brightest text */
-    --text-secondary: #c0c0d0;      /* Default text */
-    --text-muted: #888e9f;          /* Muted text */
-
-
-
-
-    --border-color: #33334c;        /* Main border */
-    --border-color-light: #4a4a63;  /* Lighter border / dividers */
-
-
-
+    --border-color: #282e3a;
+    --border-color-light: #383e4a;
 
     --accent-green: #00ffcc;
     --accent-green-rgb: 0, 255, 204;
-    --accent-green-darker: #00e6b8; /* For hover states */
+    --accent-green-darker: #00e6b8;
+
     --accent-pink: #ff007f;
     --accent-pink-rgb: 255, 0, 127;
-    --accent-blue: #00bfff;        /* Example for another accent */
+
+    --accent-blue: #00bfff;
     --accent-blue-rgb: 0, 191, 255;
 
-
-
+    --accent-purple: #9f78ff;
+    --accent-purple-rgb: 159, 120, 255;
 
     --font-primary: 'Montserrat', sans-serif;
-    --font-display: 'Orbitron', sans-serif; /* For large headers/numbers */
+    --font-display: 'Orbitron', sans-serif;
 
+    --shadow-soft: 0 4px 12px rgba(0,0,0,0.2);
+    --shadow-medium: 0 6px 20px rgba(0,0,0,0.25);
+    --shadow-inset: inset 0 2px 4px rgba(0,0,0,0.1);
 
+    --border-radius-sm: 5px;
+    --border-radius-md: 10px;
+    --border-radius-lg: 15px;
 
-
-    --shadow-soft: 0 4px 12px rgba(0,0,0,0.15);
-    --shadow-medium: 0 6px 20px rgba(0,0,0,0.2); /* A bit more pronounced */
-    --border-radius-sm: 4px;
-    --border-radius-md: 8px;
-    --border-radius-lg: 12px;
+    --transition-fast: all 0.2s ease-out;
+    --transition-medium: all 0.3s ease-out;
 }
 
-
-
-
-/* Import Fonts (if not already done in WP) */
-
-
-
-
-/* --- Overall Dashboard Page Area --- */
-.personalized-dashboard-page-area {
-    padding: 80px 15px 40px 15px;
-    /* Subtle gradient for depth */
-    background: linear-gradient(180deg, var(--bg-dark-tertiary) 0%, var(--bg-dark-primary) 20%);
-    color: var(--text-secondary);
-    font-family: var(--font-primary);
-    min-height: 100vh;
-    overflow-x: hidden; /* Prevent horizontal scroll from subtle animations */
-}
-
-
-
-
-/* --- Main Dashboard Container --- */
-.personalized-dashboard-container {
-    max-width: 1200px; /* Slightly wider for more complex layouts */
-    margin: 20px auto;
+/* --- Base HTML & Body Styles --- */
+html, body {
+    margin: 0;
     padding: 0;
-    background-color: transparent;
+    box-sizing: border-box;
+    background-color: var(--bg-dark-primary);
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    font-weight: 600;
+    line-height: 1.3;
 }
 
+/* --- Overall Page Area --- */
+.personalized-dashboard-page-area {
+    padding: 60px 15px 40px 15px;
+    background: var(--bg-dark-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
 
-
+.personalized-dashboard-container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
 
 /* --- Dashboard Header (Welcome message) --- */
-.personalized-dashboard-container .dashboard-header {
+.dashboard-header {
     background-color: var(--bg-dark-secondary);
-    padding: 30px 35px; /* Slightly more padding */
-    margin-bottom: 30px; /* Consistent spacing */
+    padding: 30px 35px;
+    margin-bottom: 30px;
     text-align: left;
     border-radius: var(--border-radius-md);
     border: 1px solid var(--border-color);
-    /* Modern top border accent */
-    /* border-top: 3px solid var(--accent-green); */ /* Optional: enable if you like this look */
     box-shadow: var(--shadow-medium);
 }
-
-
-
-
-.personalized-dashboard-container .dashboard-header h1 {
+.dashboard-header h1 {
     font-family: var(--font-display);
-    font-size: clamp(1.8em, 3.5vw, 2.2em); /* Slightly larger */
+    font-size: clamp(1.7em, 3vw, 2.1em);
     color: var(--text-light);
-    margin-top: 0;
-    margin-bottom: 10px;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+}
+.dashboard-header h1 .dashicons {
+    color: var(--accent-green);
+    margin-right: 12px;
+    font-size: 0.9em;
+    position: relative;
+    top: -2px;
+}
+.dashboard-header p {
+    font-size: 0.95em;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    line-height: 1.65;
+}
+.dashboard-header p.lead {
+    font-size: 1.05em;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.dashboard-header p.lead strong {
+    color: var(--accent-green);
     font-weight: 600;
 }
 
-
-
-
-.personalized-dashboard-container #personalized-greeting p {
-    font-size: 1em; /* Slightly larger */
-    color: var(--text-secondary);
-    margin-bottom: 5px;
-    line-height: 1.6;
-}
-.personalized-dashboard-container #personalized-greeting p.lead {
-    font-size: 1.1em;
-    font-weight: 500;
-    color: var(--accent-green);
-    margin-bottom: 0;
-}
-
-
-
-
 /* --- Visitor Input Area --- */
-.personalized-dashboard-container .visitor-input-area {
+.visitor-input-area {
     background-color: var(--bg-dark-secondary);
     padding: 25px 30px;
     border-radius: var(--border-radius-md);
     border: 1px solid var(--border-color);
     display: flex;
     flex-wrap: wrap;
-    gap: 20px; /* Increased gap */
+    gap: 18px;
     align-items: center;
     margin-bottom: 30px;
     box-shadow: var(--shadow-soft);
 }
-.personalized-dashboard-container .visitor-input-area input[type="text"] {
+.visitor-input-area input[type="text"] {
     flex-grow: 1;
-    padding: 12px 16px; /* More padding */
+    padding: 13px 18px;
     border: 1px solid var(--border-color-light);
     border-radius: var(--border-radius-sm);
-    font-size: 0.95em; /* Slightly larger */
+    font-size: 1em;
     color: var(--text-light);
     background-color: var(--bg-input);
     outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smoother transition */
+    transition: var(--transition-medium);
 }
-.personalized-dashboard-container .visitor-input-area input[type="text"]::placeholder {
+.visitor-input-area input[type="text"]::placeholder {
     color: var(--text-muted);
+    opacity: 0.8;
 }
-.personalized-dashboard-container .visitor-input-area input[type="text"]:focus {
+.visitor-input-area input[type="text"]:focus {
     border-color: var(--accent-green);
-    box-shadow: 0 0 0 3px rgba(var(--accent-green-rgb), 0.25); /* More prominent focus */
+    box-shadow: 0 0 0 3px rgba(var(--accent-green-rgb), 0.2);
 }
-
-
-
-
-.personalized-dashboard-container .visitor-input-area button.button {
-    padding: 12px 25px; /* More padding */
+.visitor-input-area button.button.button-primary { /* Be specific for the button if it's a general class */
+    padding: 13px 28px;
     background-color: var(--accent-green);
-    color: var(--bg-dark-primary); /* Ensure contrast */
+    color: var(--bg-dark-primary) !important; /* Ensure contrast if button text is light by default */
     border: none;
     border-radius: var(--border-radius-sm);
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.95em;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
-.personalized-dashboard-container .visitor-input-area button.button:hover {
+.visitor-input-area button.button.button-primary:hover:not(:disabled) {
     background-color: var(--accent-green-darker);
-    transform: translateY(-2px); /* Slightly more pop */
-    box-shadow: 0 2px 8px rgba(var(--accent-green-rgb), 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(var(--accent-green-rgb), 0.25);
 }
-.personalized-dashboard-container .visitor-status-message {
+.visitor-input-area button.button.button-primary:disabled {
+    background-color: var(--border-color-light);
+    color: var(--text-muted) !important;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.visitor-input-area button.button.button-primary .dashicons {
+    line-height: 1;
+    font-size: 1.1em;
+}
+.visitor-status-message {
     width: 100%;
     text-align: left;
-    font-size: 0.9em; /* Slightly larger */
+    font-size: 0.9em;
     color: var(--text-muted);
-    margin-top: 10px;
-    min-height: 1.4em;
+    margin-top: 8px;
+    min-height: 1.3em;
+    font-style: italic;
 }
 
-
-
-
-
-
-
-
-/* --- General Message Styling (Error, Info) --- */
-.personalized-dashboard-container .dashboard-message {
-    padding: 18px 25px; /* More padding */
-    margin: 25px 0;
-    border-radius: var(--border-radius-sm);
-    text-align: left;
-    font-size: 0.95em;
-    border: 1px solid;
-    /* Add an icon area */
+/* --- General Section Styling (Dashboard Card) --- */
+.dashboard-section.card {
+    margin-bottom: 35px;
+    background-color: var(--bg-dark-secondary);
+    padding: 30px 35px;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-medium);
+}
+.section-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.4em, 2.8vw, 1.7em);
+    color: var(--text-light);
+    margin: 0 0 25px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color-light);
+    font-weight: 600;
     display: flex;
     align-items: center;
 }
-.personalized-dashboard-container .dashboard-message::before {
-    /* For Font Awesome or Dashicons. Adjust as needed. */
-    font-family: "Dashicons"; /* Or "Font Awesome 5 Free" etc. */
+.section-title .dashicons {
     margin-right: 12px;
-    font-size: 1.5em;
+    font-size: 0.9em;
+    color: var(--accent-green); /* Default icon color for section titles */
+    position: relative;
+    top: -1px;
 }
-.personalized-dashboard-container .dashboard-message.error {
-    background-color: rgba(var(--accent-pink-rgb), 0.1);
-    color: var(--accent-pink);
-    border-color: rgba(var(--accent-pink-rgb), 0.4); /* Stronger border */
+.subsection-title {
+    font-family: var(--font-primary);
+    font-size: 1.15em;
+    color: var(--text-primary); /* Default color for subsections */
+    margin: 25px 0 15px 0;
+    font-weight: 600;
 }
-.personalized-dashboard-container .dashboard-message.error::before {
-    content: "\f153"; /* Example: Dashicons warning */
-    color: var(--accent-pink);
+.subsection-title.chart-title {
+    text-align: center;
+    margin-bottom: 20px;
 }
-.personalized-dashboard-container .dashboard-message.info {
-    background-color: rgba(var(--accent-blue-rgb), 0.08); /* Use another accent for info */
+.subsection-title.chart-title .dashicons {
     color: var(--accent-blue);
-    border-color: rgba(var(--accent-blue-rgb), 0.3);
-}
-.personalized-dashboard-container .dashboard-message.info::before {
-    content: "\f348"; /* Example: Dashicons info */
-    color: var(--accent-blue);
+    margin-right: 8px;
 }
 
+/* --- Briefing Section (#briefing-section from dashboard.js) --- */
+#briefing-section .section-title .dashicons { color: var(--accent-purple); }
+#briefing-section .subsection-title { color: var(--accent-purple); margin-top: 20px; margin-bottom: 10px; }
+#briefing-section p { line-height: 1.7; margin-bottom: 15px; color: var(--text-secondary); }
+#briefing-section p strong { color: var(--text-primary); font-weight: 600; }
+.company-logo-container { text-align: center; margin: 0 auto 25px auto; max-width: 200px; }
+.company-logo { max-height: 70px; width: auto; display: inline-block; border-radius: var(--border-radius-sm); background-color: #fff; padding: 8px; box-shadow: var(--shadow-soft); }
 
-
-
-
-
-
-
-/* --- General Section Styling (Dashboard Card) --- */
-.personalized-dashboard-container .dashboard-section.card {
-    margin-bottom: 30px; /* Consistent spacing */
-    background-color: var(--bg-dark-secondary);
-    padding: 30px 35px; /* Match header */
-    border-radius: var(--border-radius-md);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-medium); /* Enhanced shadow */
-    transition: transform 0.3s ease, box-shadow 0.3s ease; /* For subtle hover */
+/* --- Key Focus Section (#key-focus-section from dashboard.js) --- */
+#key-focus-section {
+    background-color: rgba(var(--accent-green-rgb), 0.03) !important;
+    border-left: 5px solid var(--accent-green) !important;
+    padding-top: 25px; padding-bottom: 30px;
 }
-/* Optional: subtle lift on card hover */
-/*
-.personalized-dashboard-container .dashboard-section.card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-}
-*/
+#key-focus-section .section-title .dashicons { color: var(--accent-green); }
+#key-focus-section .subsection-title { color: var(--accent-green); margin-top: 20px; }
+#key-focus-section .subsection-title:first-of-type { margin-top: 5px; }
+#key-focus-section p { color: var(--text-primary); }
+#key-focus-section .styled-list li::before { color: var(--accent-green); }
 
+/* --- Growth Opportunities Section (#growth-opportunities-section from dashboard.js) --- */
+#growth-opportunities-section .section-title .dashicons { color: var(--accent-blue); }
+#growth-opportunities-section p { color: var(--text-secondary); }
+#growth-opportunities-section p strong { color: var(--text-primary); }
+#growth-opportunities-section .styled-list li::before { color: var(--accent-blue); }
 
-
-
-/* --- Section Titles within Dashboard Cards --- */
-.personalized-dashboard-container .section-title {
-    font-family: var(--font-primary);
-    font-size: clamp(1.3em, 2.5vw, 1.5em);
-    color: var(--text-light);
-    margin-top: 0;
-    margin-bottom: 25px; /* More space below title */
-    padding-bottom: 15px; /* More space for underline */
-    border-bottom: 1px solid var(--border-color-light);
-    font-weight: 600;
-    display: flex; /* For icon alignment */
-    align-items: center;
-}
-/* Example: Add icon to section title if needed via HTML:
-   <h2 class="section-title"><span class="dashicons dashicons-chart-bar"></span> Title</h2>
-*/
-.personalized-dashboard-container .section-title .dashicons,
-.personalized-dashboard-container .section-title .fas { /* For Font Awesome */
-    margin-right: 10px;
-    font-size: 0.9em; /* Relative to title */
-    color: var(--accent-green); /* Or inherit */
-}
-
-
-
-
-.personalized-dashboard-container .subsection-title {
-    font-family: var(--font-primary);
-    font-size: 1.1em; /* Slightly larger */
-    color: var(--accent-green);
-    margin-top: 25px;
-    margin-bottom: 15px;
-    font-weight: 600;
-}
-
-
-
-
-.personalized-dashboard-container .section-separator {
-    display: none;
-}
-
-
-
-
-/* --- "Company at a Glance" & "Growth Opps" Specifics --- */
-.personalized-dashboard-container #company-at-a-glance {
-    font-size: 0.95em;
-}
-.personalized-dashboard-container #company-at-a-glance h3 {
-    font-family: var(--font-primary);
-    font-size: 1.05em;
-    color: var(--text-light);
-    margin-top: 18px;
-    margin-bottom: 8px;
-    font-weight: 600;
-}
-.personalized-dashboard-container #company-at-a-glance p {
-    margin-bottom: 10px;
-    color: var(--text-secondary);
-    line-height: 1.7; /* Increased for readability */
-}
-.personalized-dashboard-container #company-at-a-glance p strong {
-    color: var(--text-light);
-    font-weight: 600; /* Stronger strong */
-}
-
-
-
-
-.personalized-dashboard-container #growth-opportunities-list {
-    font-size: 0.95em;
-}
-.personalized-dashboard-container #growth-opportunities-list ul {
-    list-style: none; padding-left: 0; margin-top: 5px;
-}
-.personalized-dashboard-container #growth-opportunities-list li {
-    margin-bottom: 12px; color: var(--text-secondary);
-    padding-left: 28px; /* More space for icon */
-    position: relative; line-height: 1.7;
-}
-.personalized-dashboard-container #growth-opportunities-list li::before {
-    /* Using Dashicons, ensure they are loaded */
-    font-family: "Dashicons";
-    content: "\f147"; /* Dashicons checkmark */
-    position: absolute; left: 0; top: 3px; /* Adjust vertical alignment */
-    color: var(--accent-green);
-    font-size: 1.2em; font-weight: normal; /* Reset font-weight for icon */
-}
-.personalized-dashboard-container #growth-opportunities-list li strong {
-    color: var(--text-light); font-weight: 600;
-}
-
-
-
+/* --- Common Styled List (used in Key Focus & Growth Opps) --- */
+.styled-list { list-style: none; padding-left: 0; margin-top: 15px; }
+.styled-list li { margin-bottom: 12px; color: var(--text-secondary); padding-left: 30px; position: relative; line-height: 1.7; }
+.styled-list li::before { font-family: "Dashicons"; content: "\f147"; position: absolute; left: 0; top: 4px; font-size: 1.3em; }
+.styled-list li strong { color: var(--text-primary); font-weight: 600; }
 
 /* --- KPI Cards --- */
-.personalized-dashboard-container .kpi-cards-container {
-    display: grid;
-    /* More flexible minmax, consider number of KPIs */
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 25px; /* Increased gap */
-    margin-bottom: 0;
+.kpi-cards-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; }
+.kpi-card {
+    background-color: var(--bg-input); padding: 25px;
+    border: 1px solid var(--border-color); border-left: 4px solid var(--accent-purple); /* Default accent */
+    border-radius: var(--border-radius-sm); color: var(--text-secondary);
+    box-shadow: var(--shadow-soft); position:relative; transition: var(--transition-fast);
+    display: flex; flex-direction: column;
 }
-.personalized-dashboard-container .kpi-card {
-    background-color: var(--bg-input); /* Use the darkest for contrast */
-    padding: 25px; /* More padding */
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm); /* Slightly smaller radius for KPI cards */
-    color: var(--text-secondary);
-    box-shadow: var(--shadow-soft);
-    position:relative;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+.kpi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-medium); border-left-color: var(--accent-green); }
+.kpi-label { font-size: 0.8em; color: var(--text-muted); margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; }
+.kpi-label .dashicons { margin-right: 8px; font-size: 1.3em; line-height: 1; } /* Color set by kpi.color in JS */
+.kpi-value { font-family: var(--font-display); font-size: 2.2em; font-weight: 600; color: var(--text-light); margin-bottom: 6px; line-height: 1.1; } /* Color set by kpi.color in JS */
+.kpi-unit { font-size: 0.7em; margin-left: 5px; color: var(--text-muted); font-family: var(--font-primary); }
+.kpi-target { font-size: 0.8em; color: var(--text-muted); margin-top: auto; padding-top: 8px; }
+
+/* --- Charts --- */
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 30px; }
+.chart-container { position: relative; margin: 0 auto 20px auto; height: 300px; width: 100%; background-color: var(--bg-input); padding: 20px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); box-shadow: var(--shadow-soft); }
+
+/* --- Accordion for Deep Research --- */
+#deep-research-accordion { margin-top: 20px; }
+.accordion-item { margin-bottom: 0; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); overflow: hidden; background-color: var(--bg-input); }
+.accordion-button { /* Replaces .accordion-header if using <button> */
+    background-color: transparent; color: var(--text-primary); padding: 18px 25px; font-size: 1.05em; font-weight: 600;
+    border: none; cursor: pointer; transition: var(--transition-fast); width: 100%; text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
 }
-.personalized-dashboard-container .kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+.accordion-button:hover { background-color: rgba(var(--accent-green-rgb), 0.05); color: var(--accent-green); }
+.accordion-button[aria-expanded="true"] { color: var(--accent-green); border-bottom: 1px solid var(--border-color-light); }
+.accordion-button .dashicons { color: var(--text-muted); font-size: 1.3em; transition: var(--transition-medium); }
+.accordion-button:hover .dashicons, .accordion-button[aria-expanded="true"] .dashicons { color: var(--accent-green); }
+.accordion-button[aria-expanded="true"] .dashicons { transform: rotate(180deg); }
+.accordion-content {
+    padding: 0; max-height: 0; overflow: hidden; background-color: transparent;
+    color: var(--text-secondary); font-size: 0.95em; line-height: 1.75;
+    transition: max-height 0.4s ease-out, padding 0.4s ease-out;
 }
+.accordion-content.open { padding: 25px 30px; max-height: 5000px; border-top: 1px solid var(--border-color-light); }
 
-
-
-
-.personalized-dashboard-container .kpi-label {
-    font-size: 0.85em;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    font-weight: 600; /* Bolder label */
-    text-transform: uppercase;
-    letter-spacing: 0.8px; /* More spacing */
-    display: flex; /* For icon alignment */
-    align-items: center;
-}
-/* Example: Add icon to KPI label via HTML:
-   <div class="kpi-label"><span class="dashicons dashicons-money"></span> Revenue</div>
-*/
-.personalized-dashboard-container .kpi-label .dashicons,
-.personalized-dashboard-container .kpi-label .fas {
-    margin-right: 8px;
-    font-size: 1.1em; /* Relative to label */
-    color: var(--text-muted); /* Or an accent */
-}
-
-
-
-
-.personalized-dashboard-container .kpi-value {
-    font-family: var(--font-display); /* Use display font for numbers */
-    font-size: 2em; /* Larger value */
-    font-weight: 600;
-    color: var(--text-light);
-    margin-bottom: 6px;
-    line-height: 1.1;
-}
-.personalized-dashboard-container .kpi-unit {
-    font-size: 0.75em; margin-left: 4px; color: var(--text-muted);
-    font-family: var(--font-primary); /* Revert for unit if value is display */
-}
-.personalized-dashboard-container .kpi-target {
-    font-size: 0.8em; color: var(--text-muted);
-    margin-top: 8px;
-}
-.personalized-dashboard-container .kpi-trend { position: absolute; top: 20px; right: 20px; }
-.personalized-dashboard-container .kpi-trend .dashicons { font-size: 20px; }
-.personalized-dashboard-container .kpi-trend.up { color: var(--accent-green); }
-.personalized-dashboard-container .kpi-trend.down { color: var(--accent-pink); }
-.personalized-dashboard-container .kpi-trend.neutral { color: var(--text-muted); }
-
-
-
-
-
-
-
-
-/* --- Full Research Accordion --- */
-.personalized-dashboard-container #deep-research-accordion {
-    margin-top: 15px;
-}
-.personalized-dashboard-container #deep-research-accordion .accordion-item {
-    margin-bottom: 0;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    overflow: hidden;
-    background-color: var(--bg-input); /* Darker background */
-}
-.personalized-dashboard-container #deep-research-accordion .accordion-header {
-    background-color: transparent;
-    color: var(--text-secondary);
-    padding: 15px 20px; /* More padding */
-    font-size: 1em; /* Slightly larger */
-    font-weight: 600; /* Bolder header */
-    border: none;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer; /* Indicate interactivity */
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-.personalized-dashboard-container #deep-research-accordion .accordion-header:hover {
-    background-color: rgba(var(--accent-green-rgb), 0.1);
-    color: var(--accent-green);
-}
-.personalized-dashboard-container #deep-research-accordion .accordion-header[aria-expanded="true"] {
-    border-bottom-color: transparent;
-    color: var(--accent-green);
-    background-color: rgba(var(--accent-green-rgb), 0.05); /* Subtle active state */
-}
-.personalized-dashboard-container #deep-research-accordion .accordion-icon {
-    color: var(--text-muted);
-    font-size: 1.2em; /* Larger icon */
-    transition: color 0.2s ease, transform 0.3s ease; /* Add transform transition */
-}
-.personalized-dashboard-container #deep-research-accordion .accordion-header:hover .accordion-icon,
-.personalized-dashboard-container #deep-research-accordion .accordion-header[aria-expanded="true"] .accordion-icon {
-    color: var(--accent-green);
-}
-.personalized-dashboard-container #deep-research-accordion .accordion-header[aria-expanded="true"] .accordion-icon {
-    transform: rotate(90deg); /* Example: rotate arrow on expand */
-}
-
-
-
-
-.personalized-dashboard-container #deep-research-accordion .accordion-content {
-    padding: 25px 30px;
-    background-color: transparent;
-    border-top: 1px solid var(--border-color-light); /* Add a separator if header border removed */
-    color: var(--text-secondary);
-    font-size: 0.9em; /* Slightly larger */
-    line-height: 1.7; /* More readable */
-}
-/* Markdown content within dashboard accordion */
-.personalized-dashboard-container #full-deep-research-content h1,
-.personalized-dashboard-container #full-deep-research-content h2,
-.personalized-dashboard-container #full-deep-research-content h3 {
-    color: var(--text-light);
-    border-bottom: 1px solid var(--border-color-light);
-    margin-top: 1.5em; margin-bottom: 0.8em; padding-bottom: 0.4em;
-}
-.personalized-dashboard-container #full-deep-research-content h1 { font-size: 1.4em; }
-.personalized-dashboard-container #full-deep-research-content h2 { font-size: 1.25em; }
-.personalized-dashboard-container #full-deep-research-content h3 { font-size: 1.1em; }
-
-
-
-
-.personalized-dashboard-container #full-deep-research-content p { color: var(--text-secondary); margin-bottom: 1em;}
-.personalized-dashboard-container #full-deep-research-content code {
-    background-color: var(--bg-dark-primary); color: var(--accent-pink);
-    padding: 0.2em 0.4em; border-radius: var(--border-radius-sm); font-size: 0.9em;
-}
-.personalized-dashboard-container #full-deep-research-content pre {
-    background-color: #06090D; border: 1px solid var(--border-color);
-    padding: 15px; border-radius: var(--border-radius-sm); overflow-x: auto;
-}
-.personalized-dashboard-container #full-deep-research-content blockquote {
-    border-left: 4px solid var(--accent-green); color: var(--text-muted);
-    padding-left: 15px; margin-left: 0; font-style: italic;
-    background-color: rgba(var(--accent-green-rgb), 0.03); /* Subtle bg for blockquote */
-}
-
-
-
+/* --- Markdown Content Styling (inside .markdown-content div) --- */
+.markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 { color: var(--text-light); border-bottom: 1px solid var(--border-color-light); margin: 1.8em 0 1em 0; padding-bottom: 0.5em; font-family: var(--font-primary); }
+.markdown-content h1 { font-size: 1.5em; } .markdown-content h2 { font-size: 1.35em; }
+.markdown-content h3 { font-size: 1.2em; }  .markdown-content h4 { font-size: 1.1em; color: var(--accent-purple); border-bottom: none;}
+.markdown-content p { color: var(--text-secondary); margin-bottom: 1.2em;}
+.markdown-content ul, .markdown-content ol { margin-bottom: 1.2em; padding-left: 25px; }
+.markdown-content li { margin-bottom: 0.6em; }
+.markdown-content a { color: var(--accent-green); text-decoration: none; font-weight: 500; }
+.markdown-content a:hover { text-decoration: underline; color: var(--accent-green-darker); }
+.markdown-content code { background-color: var(--bg-dark-primary); color: var(--accent-pink); padding: 0.25em 0.5em; border-radius: var(--border-radius-sm); font-size: 0.9em; }
+.markdown-content pre { background-color: #06090D; border: 1px solid var(--border-color); padding: 18px; border-radius: var(--border-radius-sm); overflow-x: auto; font-size: 0.9em; }
+.markdown-content pre code { background-color: transparent; padding: 0; }
+.markdown-content blockquote { border-left: 5px solid var(--accent-purple); color: var(--text-muted); padding: 10px 20px; margin: 1.5em 0; font-style: italic; background-color: rgba(var(--accent-purple-rgb), 0.04); }
+.markdown-content table { width: 100%; border-collapse: collapse; margin-bottom: 1.5em; font-size: 0.9em; }
+.markdown-content th, .markdown-content td { border: 1px solid var(--border-color-light); padding: 10px 12px; text-align: left; }
+.markdown-content th { background-color: var(--bg-input); color: var(--text-primary); font-weight: 600; }
 
 /* --- Booking Widget --- */
-.personalized-dashboard-container .booking-widget {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-md);
-    min-height: 680px; /* Adjusted */
-    background-color: var(--bg-input); /* Darker */
-    overflow: hidden; /* To ensure iframe radius is respected */
-}
-.personalized-dashboard-container .booking-widget iframe {
-    border-radius: var(--border-radius-md); /* Match parent */
-    height: 680px; /* Match min-height */
-    width: 100%; /* Ensure it fills the container */
-    border: none; /* Remove iframe default border */
-}
-.personalized-dashboard-container .booking-placeholder {
-    color: var(--text-muted);
-    background-color: transparent;
-    padding: 50px 25px;
-    border-radius: var(--border-radius-md);
-    min-height: 250px;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; text-align: center;
-}
-.personalized-dashboard-container .booking-placeholder .dashicons {
-    font-size: 48px;
-    margin-bottom: 15px;
-    color: var(--border-color-light);
-}
+.booking-widget { border: 1px solid var(--border-color); border-radius: var(--border-radius-md); min-height: 700px; background-color: var(--bg-dark-primary); overflow: hidden; box-shadow: var(--shadow-inset); }
+.booking-widget iframe { border-radius: var(--border-radius-md); height: 700px; width: 100%; border: none; }
+.booking-placeholder { color: var(--text-muted); background-color: transparent; padding: 60px 30px; border-radius: var(--border-radius-md); min-height: 280px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+.booking-placeholder .dashicons { font-size: 52px; margin-bottom: 18px; color: var(--border-color-light); }
+.booking-placeholder a { color: var(--accent-green); text-decoration: none; }
+.booking-placeholder a:hover { text-decoration: underline; }
 
+/* --- Fade-in Animation for Content --- */
+.fade-in-content { animation: fadeInAnimation 0.7s ease-out forwards; opacity: 0; }
+@keyframes fadeInAnimation { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
 
-
-
-
-
-
-
-/* --- Dashboard Mobile Responsiveness (Refined) --- */
-@media (max-width: 992px) { /* Adjust breakpoint for wider container */
-    .personalized-dashboard-container .kpi-cards-container {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Allow more KPIs per row on medium screens */
-    }
-}
-
-
-
-
+/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-    .personalized-dashboard-page-area { padding-top: 70px; padding-left:10px; padding-right:10px; }
-    .personalized-dashboard-container { margin: 15px auto; }
-
-
-
-
-    .personalized-dashboard-container .dashboard-header,
-    .personalized-dashboard-container .visitor-input-area,
-    .personalized-dashboard-container .dashboard-section.card {
-        padding: 25px 20px; /* Adjusted padding */
-        border-radius: var(--border-radius-sm);
-    }
-    .personalized-dashboard-container .dashboard-header h1 { font-size: clamp(1.5em, 4.5vw, 1.8em); }
-    .personalized-dashboard-container .visitor-input-area { flex-direction: column; gap: 15px; }
-    .personalized-dashboard-container .visitor-input-area input[type="text"],
-    .personalized-dashboard-container .visitor-input-area button.button {
-        width: 100%; font-size: 1em; /* Slightly larger for touch */
-    }
-    .personalized-dashboard-container .section-title { font-size: clamp(1.2em, 3.8vw, 1.4em); }
-    .personalized-dashboard-container .subsection-title { font-size: 1em; }
-
-
-
-
-    .personalized-dashboard-container #company-at-a-glance,
-    .personalized-dashboard-container #growth-opportunities-list,
-    .personalized-dashboard-container #deep-research-accordion .accordion-content {
-        font-size: 0.9em;
-    }
-    .personalized-dashboard-container .kpi-cards-container {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Can still fit 2 wide on some tablets */
-        gap: 15px;
-    }
+    .personalized-dashboard-page-area { padding: 50px 10px 30px 10px; }
+    .dashboard-header, .visitor-input-area, .dashboard-section.card { padding: 25px 20px; border-radius: var(--border-radius-sm); }
+    .dashboard-header h1 { font-size: clamp(1.5em, 4.5vw, 1.9em); }
+    .visitor-input-area { flex-direction: column; gap: 15px; }
+    .visitor-input-area input[type="text"], .visitor-input-area button.button.button-primary { width: 100%; font-size: 1em; }
+    .section-title { font-size: clamp(1.25em, 3.8vw, 1.5em); }
+    .kpi-cards-container { grid-template-columns: 1fr; gap: 18px; }
+    .charts-grid { grid-template-columns: 1fr; gap: 25px; }
+    .markdown-content { font-size: 0.92em; }
+    .accordion-content { font-size: 0.92em; }
 }
-
-
-
-
 @media (max-width: 480px) {
-    .personalized-dashboard-page-area { padding-top: 60px; }
-    .personalized-dashboard-container .dashboard-header,
-    .personalized-dashboard-container .visitor-input-area,
-    .personalized-dashboard-container .dashboard-section.card {
-        padding: 20px 15px;
-        border-radius: var(--border-radius-sm); /* Consistent small radius */
-    }
-    .personalized-dashboard-container .dashboard-header h1 { font-size: clamp(1.4em, 5vw, 1.7em); }
-    .personalized-dashboard-container .section-title { font-size: clamp(1.1em, 4vw, 1.3em); }
-
-
-
-
-    .personalized-dashboard-container .kpi-card { padding: 20px; }
-    .personalized-dashboard-container .kpi-value { font-size: 1.8em; }
-    .personalized-dashboard-container .kpi-cards-container {
-        grid-template-columns: 1fr; /* Single column KPIs */
-    }
-    .personalized-dashboard-container #company-at-a-glance,
-    .personalized-dashboard-container #growth-opportunities-list,
-    .personalized-dashboard-container #deep-research-accordion .accordion-content {
-        font-size: 0.88em;
-    }
+    .personalized-dashboard-page-area { padding-top: 40px; }
+    .dashboard-header, .visitor-input-area, .dashboard-section.card { padding: 20px 15px; }
+    .dashboard-header h1 { font-size: clamp(1.4em, 5vw, 1.7em); }
+    .section-title { font-size: clamp(1.15em, 4vw, 1.4em); }
+    .kpi-card { padding: 20px; } .kpi-value { font-size: 1.9em; }
+    .booking-widget, .booking-widget iframe { min-height: 600px; height: 600px;}
+    .markdown-content table { font-size: 0.8em; }
+    .markdown-content th, .markdown-content td { padding: 6px 8px; }
 }
 
-
-
-
-/* Additional styles for charts (see section II) */
-.chart-container {
-    position: relative;
-    margin: 20px auto; /* Add some margin around charts */
-    height: 300px; /* Default height, can be overridden */
-    width: 100%;
-    background-color: var(--bg-input); /* Match KPI card bg */
-    padding: 20px;
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-soft);
-}
-
-
+/* Keyframes for loader (if using CSS only loader, react-spinners doesn't need this) */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
