@@ -23,11 +23,11 @@ function escapeHtml(unsafe) {
         try { unsafe = String(unsafe); } catch (e) { return ''; }
     }
     return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");;
+        .replace(/&/g, "&")
+        .replace(/</g, "<")
+        .replace(/>/g, ">")
+        .replace(/"/g, """)
+        .replace(/'/g, "'"); // Single semicolon
 }
 
 export default function DashboardPage() {
