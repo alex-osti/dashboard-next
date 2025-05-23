@@ -293,7 +293,7 @@ export default function DashboardPage() {
                                     <span className="dashicons dashicons-admin-users"></span>
                                     Welcome,&nbsp;<span>{escapeHtml(firstName)}{companyName !== 'Your Company' ? ` from ${escapeHtml(companyName)}` : ''}</span>!
                                 </h1>
-                                <p className="lead">This dashboard highlights how MakerToo can assist {escapeHtml(companyName)} in <strong>{escapeHtml(fromAbstract)}</strong>.</p>
+                                <p className="lead">This dashboard highlights how MakerToo can assist {escapeHtml(companyName)} to <strong>{escapeHtml(fromAbstract)}</strong>.</p>
                                 <p>Explore below for tailored insights and our detailed research.</p>
                             </>
                         ) : (appState === 'loading' || appState === 'initializing' || appState === 'initializing_config') ? (
