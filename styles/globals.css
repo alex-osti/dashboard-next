@@ -309,7 +309,7 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--text-secondary); font-size: 0.95em; line-height: 1.75;
     transition: max-height 0.4s ease-out, padding 0.4s ease-out;
 }
-.accordion-content.open { padding: 25px 30px; max-height: 5000px; border-top: 1px solid var(--border-color-light); }
+.accordion-content.open { padding: 25px 30px; max-height: 11000px; border-top: 1px solid var(--border-color-light); }
 
 /* --- Markdown Content Styling (inside .markdown-content div) --- */
 .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 { color: var(--text-light); border-bottom: 1px solid var(--border-color-light); margin: 1.8em 0 1em 0; padding-bottom: 0.5em; font-family: var(--font-primary); }
