@@ -239,7 +239,7 @@ export default function DashboardPage() {
 
     // --- Derived Data for Rendering (from nocoData) ---
     const firstName = nocoData?.first_name || 'Valued Lead';
-    const companyName = nocoData?.organization_name || 'Your Company';
+    const companyName = nocoData?.company_short || 'Your Company';
     const companyLogo = nocoData?.logo_url;
     const companyWebsite = nocoData?.website_url;
     const fromAbstract = nocoData?.from_abstract || 'achieving key strategic objectives';
