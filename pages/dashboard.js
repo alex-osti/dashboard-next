@@ -180,7 +180,7 @@ export default function DashboardPage() {
                             if (currentCoreServicesListString) { try { currentCoreServices = JSON.parse(currentCoreServicesListString); } catch (e) { console.warn("Could not parse core services list:", e); } }
                             
                             let currentKpisToShow = [
-                                { label: "Strategic Alignment", value: "High", target: "With MakerToo's Open-Source Focus", icon: "dashicons-admin-links", color: "var(--accent-purple)" },
+                                { label: "Strategic Alignment", value: "High", target: "With MakerToo*s Open-Source Focus", icon: "dashicons-admin-links", color: "var(--accent-purple)" },
                                 { label: "Innovation Potential", value: "Significant", target: "Via Custom AI/Automation", icon: "dashicons-lightbulb", color: "var(--accent-blue)" },
                                 { label: "Data Control", value: "Total", target: "Through Private Infrastructure", icon: "dashicons-lock", color: "var(--accent-green)" },
                                 { label: "Future Scalability", value: "Assured", target: "With Flexible Tech Stacks", icon: "dashicons-backup", color: "var(--accent-pink)" },
@@ -235,7 +235,7 @@ export default function DashboardPage() {
                                     {currentCoreServices && currentCoreServices.length > 0 && (
                                         <section id="growth-opportunities-section" className="dashboard-section card">
                                             <h2 className="section-title"><span className="dashicons dashicons-awards"></span>Leveraging Your Strengths</h2>
-                                            <p>Based on {escapeHtml(currentCompanyName)}'s core services in <strong>{currentCoreServices.map(s => escapeHtml(s)).join(', ')}</strong>, MakerToo can partner with you to:</p>
+                                            <p>Based on {escapeHtml(currentCompanyName)}*s core services in <strong>{currentCoreServices.map(s => escapeHtml(s)).join(', ')}</strong>, MakerToo can partner with you to:</p>
                                             <ul className="styled-list">
                                                 <li><strong>Amplify Service Impact:</strong> Integrate custom AI tools to enhance the delivery and effectiveness of your core offerings.</li>
                                                 <li><strong>Boost Operational Efficiency:</strong> Streamline backend workflows related to these services using n8n automation and efficient open-source databases.</li>
@@ -262,7 +262,7 @@ export default function DashboardPage() {
 
                                     <section id="analytics-overview" className="dashboard-section card">
                                         <h2 className="section-title"><span className="dashicons dashicons-chart-area"></span>Illustrative Performance Projections</h2>
-                                        <p style={{textAlign: 'center', marginBottom: '30px', color: 'var(--text-secondary)'}}>Visualizing the potential impact of MakerToo's solutions for {escapeHtml(currentCompanyName)}. These are illustrative projections based on common outcomes.</p>
+                                        <p style={{textAlign: 'center', marginBottom: '30px', color: 'var(--text-secondary)'}}>Visualizing the potential impact of MakerToo*s solutions for {escapeHtml(currentCompanyName)}. These are illustrative projections based on common outcomes.</p>
                                         <div className="charts-grid">
                                             <div className="chart-container-wrapper">
                                                 <h3 className="subsection-title chart-title"><span className="dashicons dashicons-chart-line"></span>Accelerated Revenue Trajectory</h3>
@@ -284,7 +284,7 @@ export default function DashboardPage() {
                                     {currentDeepResearchMd && (
                                         <section id="full-research-section" className="dashboard-section card">
                                             <h2 className="section-title"><span className="dashicons dashicons-book-alt"></span>Dive Deeper: Full Research for {escapeHtml(currentCompanyName)}</h2>
-                                            <p>The following is the detailed research report compiled to understand {escapeHtml(currentCompanyName)}'s unique market position and opportunities. This research underpins the strategies we propose.</p>
+                                            <p>The following is the detailed research report compiled to understand {escapeHtml(currentCompanyName)}*s unique market position and opportunities. This research underpins the strategies we propose.</p>
                                             <div id="deep-research-accordion" className="accordion">
                                                 <div className="accordion-item">
                                                     <button className="accordion-button" onClick={() => setIsResearchAccordionOpen(!isResearchAccordionOpen)} aria-expanded={isResearchAccordionOpen} aria-controls="deep-research-content-panel">
@@ -299,7 +299,7 @@ export default function DashboardPage() {
 
                                      <section id="booking-section" className="dashboard-section card">
                                         <h2 className="section-title"><span className="dashicons dashicons-calendar-alt"></span>Ready to Elevate {escapeHtml(currentCompanyName)}, {escapeHtml(currentFirstName)}?</h2>
-                                        <p>Let's schedule a complimentary strategy session to discuss how MakerToo can architect and implement these AI & Automation solutions, tailored specifically for your goals.</p>
+                                        <p>Let*s schedule a complimentary strategy session to discuss how MakerToo can architect and implement these AI & Automation solutions, tailored specifically for your goals.</p>
                                         <div id="booking-widget-container" className="booking-widget">
                                             {wpConfig && wpConfig.bookingLink && !wpConfig.bookingLink.includes("YOUR_") && !wpConfig.bookingLink.includes("page-slug") && !wpConfig.bookingLink.includes("calendar-embed") ? (
                                                 <iframe src={wpConfig.bookingLink} title={`Schedule a Consultation with MakerToo for ${escapeHtml(currentCompanyName)}`} loading="lazy" style={{ width: '100%', height: '700px', border: 'none', borderRadius: 'var(--border-radius-md)' }}/>
